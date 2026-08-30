@@ -51,11 +51,16 @@ const X = s => String(s==null?'':s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const FONT = '<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>';
 
+/* Cỡ chữ toàn tài liệu nhân theo tuỳ chọn «Cỡ chữ (%)» của hộp thoại bản in */
+let SCALE=1;
+const SZ = n => Math.max(8, Math.round(n*SCALE));
+
 function run(text,o){
   o=o||{};
+  const sz=SZ(o.sz||22);
   const rPr=`<w:rPr>${FONT}${o.b?'<w:b/>':''}${o.i?'<w:i/>':''}`
-    + `<w:color w:val="${o.color||'000000'}"/><w:sz w:val="${o.sz||22}"/>`
-    + `<w:szCs w:val="${o.sz||22}"/></w:rPr>`;
+    + `<w:color w:val="${o.color||'000000'}"/><w:sz w:val="${sz}"/>`
+    + `<w:szCs w:val="${sz}"/></w:rPr>`;
   return String(text).split('\n').map((line,i)=>
     `<w:r>${rPr}${i?'<w:br/>':''}<w:t xml:space="preserve">${X(line)}</w:t></w:r>`).join('');
 }
@@ -145,15 +150,18 @@ function tableXml(tbl,mono,total){
 }
 
 /* ---------- Dựng tài liệu ---------- */
-function bodyFromView(root,mono){
-  const W=15650;                       // bề rộng in được của A4 ngang, đơn vị twip
+function bodyFromView(root,mono,landscape){
+  // bề rộng in được = khổ giấy trừ lề trái phải (567 twip mỗi bên)
+  const W = landscape ? 15650 : 10740;
   const blocks=[...root.querySelectorAll('.tt-block')];
   if(!blocks.length) return null;
   let body='';
   blocks.forEach((b,bi)=>{
     if(bi) body+=PAGEBREAK;
-    const sch=b.querySelector('.tt-head .sch'), ttl=b.querySelector('.tt-head .ttl'),
+    const dept=b.querySelector('.tt-head .dept'),
+          sch=b.querySelector('.tt-head .sch'), ttl=b.querySelector('.tt-head .ttl'),
           meta=b.querySelector('.tt-head .meta');
+    if(dept) body+=para(run(dept.textContent.trim(),{sz:21}),{after:20});
     if(sch) body+=para(run(sch.textContent.trim(),{sz:22}),{after:40});
     if(ttl) body+=para(run(ttl.textContent.trim(),{b:true,sz:32}),{after:40});
     if(meta) body+=para(run(meta.textContent.trim(),{sz:22}),{after:60});
@@ -163,6 +171,12 @@ function bodyFromView(root,mono){
     if(tbl) body+=tableXml(tbl,mono,W);
     const lg=[...b.querySelectorAll('.legend span')].map(x=>x.textContent.trim()).filter(Boolean);
     if(lg.length) body+=para(run(lg.join('   •   '),{sz:17}),{before:120,align:'left'});
+    const note=b.querySelector('.tt-note');
+    if(note && note.textContent.trim())
+      body+=para(run(note.textContent.trim(),{sz:21,i:true}),{before:140,align:'left'});
+    const place=b.querySelector('.tt-place');
+    if(place && place.textContent.trim())
+      body+=para(run(place.textContent.trim(),{sz:22,i:true}),{before:160,align:'right'});
     const foot=[...b.querySelectorAll('.tt-foot > div')];
     if(foot.length){
       const w=Math.floor(W/foot.length);
@@ -180,14 +194,21 @@ function bodyFromView(root,mono){
         + `<w:tr>${cells}</w:tr></w:tbl>`;
     }
   });
-  body += '<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>'
+  body += (landscape
+        ? '<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>'
+        : '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>')
         + '<w:pgMar w:top="567" w:right="567" w:bottom="567" w:left="567" '
         + 'w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>';
   return body;
 }
 
-function build(root,mono){
-  const body=bodyFromView(root,mono);
+/* opt = {mono, scale, orientation} — vẫn nhận opt là boolean (mono) như bản cũ */
+function build(root,opt){
+  if(typeof opt!=='object' || opt===null) opt={mono:!!opt};
+  const mono=!!opt.mono;
+  const landscape = opt.orientation!=='portrait';
+  SCALE = Math.max(.7, Math.min(1.3, +opt.scale || 1));
+  const body=bodyFromView(root,mono,landscape);
   if(!body) return null;
   const enc=new TextEncoder();
   const doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'

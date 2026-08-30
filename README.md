@@ -9,10 +9,11 @@ dùng **Xuất dữ liệu** để sao lưu ra tệp `.json` và **Nhập dữ l
 ## Cấu trúc
 ```
 ThoiKhoaBieu-TieuHoc/
-├── index.html          Giao diện 10 tab
-├── css/style.css       Giao diện + định dạng bản in A4 ngang
-├── js/data.js          Chương trình GDPT 2018 + dữ liệu mẫu (10 lớp, 17 GV, 5 phòng)
+├── index.html          Giao diện 11 tab
+├── css/style.css       Giao diện + định dạng bản in A4
+├── js/data.js          Chương trình GDPT 2018 + dữ liệu mẫu (10 lớp, 20 GV, 5 phòng)
 ├── js/scheduler.js     Bộ máy xếp lịch (ràng buộc cứng/mềm, tối ưu)
+├── js/docx.js          Xuất tệp Word .docx chuẩn OOXML, không cần thư viện ngoài
 └── js/app.js           Điều phối giao diện
 ```
 
@@ -193,7 +194,7 @@ hiển thị nhãn dồn lớp và lịch nghỉ — **đạt toàn bộ**.
 | **Phòng học** | Phòng chức năng và sức chứa đồng thời |
 | **Ràng buộc** | Bật/tắt tiêu chí • ghim tiết • ô cấm • lịch bận từng GV |
 | **Chạy xếp lịch** | Xem tiền kiểm → bấm chạy → đọc nhật ký → **bảng lịch nghỉ của GV** → thống kê định mức |
-| **Xem & In** | TKB theo lớp / GV / phòng / bảng tổng hợp • **xuất Word (.doc), PDF, CSV** • bản có màu / không màu • **kéo thả & khoá tiết** |
+| **Xem & In** | TKB theo lớp / GV / phòng / bảng tổng hợp • **xuất Word (.docx), PDF, CSV** • **⚙ Tuỳ chỉnh bản in** (chọn nội dung in ra, xem trước đúng khổ giấy, lưu lại định dạng) • **kéo thả & khoá tiết** |
 | **Kiểm tra** | Rà soát toàn bộ ràng buộc cứng và mềm trước khi trình ký |
 | **Sao lưu & Lịch sử** | Ảnh chụp toàn bộ dữ liệu theo thời điểm — khôi phục bản cũ khi lỡ sửa hỏng, tải về máy dạng .json |
 
@@ -219,10 +220,26 @@ Chào cờ và Sinh hoạt lớp đã ghim cố định theo quy định nên kh
 
 ## Xuất Word / PDF
 
-- **Xuất Word** tạo tệp **`.docx` chuẩn OOXML** (không phải HTML đổi đuôi), mở và **chỉnh sửa trực tiếp** trong Microsoft Word như tài liệu bình thường. Layout dựng từ đúng bảng đang xem trên web: giữ nguyên màu môn, khung viền, cỡ chữ, chú giải và ba ô ký tên; khổ A4 nằm ngang, mỗi lớp một trang.
+- **Xuất Word** tạo tệp **`.docx` chuẩn OOXML** (không phải HTML đổi đuôi), mở và **chỉnh sửa trực tiếp** trong Microsoft Word như tài liệu bình thường. Layout dựng từ đúng bảng đang xem trên web: giữ nguyên màu môn, khung viền, cỡ chữ, chú giải và các ô ký tên; mỗi lớp một trang.
 - **Xuất PDF** mở hộp thoại in — chọn *Lưu thành PDF* và **bỏ chọn «Headers and footers»** để bản in không dính URL, ngày giờ và tên trình duyệt. Bản in đã bật `print-color-adjust: exact` nên **màu nền ô luôn được in**, không cần chỉnh gì thêm.
-- Tick **«Bản không màu»** để in trắng đen.
 - Bản xuất đã tự bỏ dòng thông tin phần mềm (thời gian lập, điểm tối ưu).
+
+### Tuỳ chỉnh bản in — nút **⚙ Tuỳ chỉnh bản in** ở tab Xem & In
+
+Hộp thoại chia hai nửa: **bên trái là tuỳ chọn, bên phải là bản xem trước đúng khổ giấy thật**.
+Sửa bên trái thấy đổi ngay bên phải. Bản xem trước, bản PDF và bản Word đều dựng từ cùng một
+nguồn nên **xem sao thì in ra đúng vậy**.
+
+| Nhóm | Chỉnh được gì |
+|---|---|
+| **Đầu trang** | Tên cơ quan chủ quản (VD *PHÒNG GD&ĐT …*) • tên trường • dòng năm học – học kỳ – ngày áp dụng • dòng phụ (GVCN, sĩ số, ghi chú lớp) |
+| **Nội dung ô tiết** | Bật/tắt tên môn, tên giáo viên, phòng chức năng, nhãn dồn lớp • chọn tên **viết tắt** hay **đầy đủ** • ô trống in dấu «—» hay để trắng |
+| **Trang giấy** | A4 **nằm ngang** hoặc **dựng đứng** • cỡ chữ 70–130 % • giờ vào–ra mỗi tiết • bản không màu • chú giải môn |
+| **Cuối trang** | Ghi chú tự do • dòng *«…, ngày … tháng … năm …»* • **sửa tên từng ô ký** (để trống là bỏ ô đó, nên in được 1, 2 hay 3 ô tuỳ trường) |
+
+- **Lưu cấu hình** ghi vào dữ liệu nên đi theo cả bản sao lưu và tệp `.json` xuất ra — mở máy khác vẫn giữ đúng định dạng.
+- **Huỷ** trả mọi tuỳ chọn về nguyên trạng lúc mở hộp thoại; **Về mặc định** đưa lại thiết lập gốc.
+- Xuất Word / PDF được ngay trong hộp thoại, không cần đóng lại.
 
 ## Sao lưu & khôi phục
 

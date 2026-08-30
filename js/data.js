@@ -12,6 +12,34 @@ const KIND_NAME = {GVCN:'GV chủ nhiệm', BOMON:'GV bộ môn', BUOI2:'GV dạ
 /* Ba nhóm phụ trách môn học */
 const WHO_NAME  = {homeroom:'GVCN', specialist:'GV bộ môn', session2:'GV buổi 2'};
 
+/* --- Bản in / bản xuất Word & PDF ---------------------------
+   Quyết định NHỮNG GÌ hiện lên tờ giấy, không đụng tới bản xem trên web.
+   Sửa và xem trước ngay trong hộp thoại «Tuỳ chỉnh bản in» ở tab Xem & In.
+------------------------------------------------------------ */
+function defaultExportCfg(){
+  return {
+    /* nội dung trong mỗi ô tiết */
+    showTeacher:true,  teacherName:'short',   // 'short' = N. Thị Lan | 'full' = Nguyễn Thị Lan
+    showSubject:true,  subjectName:'short',   // 'short' = Tiếng Việt | 'full' = tên đầy đủ
+    showRoom:true,     showMerge:true,
+    emptyDash:true,                            // ô trống in dấu "—" hay để trắng
+
+    /* phần đầu mỗi trang */
+    showDept:false,    deptName:'PHÒNG GD&ĐT ……………',
+    showSchool:true,   showMeta:true,  showSubMeta:true,
+
+    /* bảng */
+    showClock:true,    mono:false,     fontScale:100,   // 85–120 %
+    orientation:'landscape',                            // 'landscape' | 'portrait'
+
+    /* phần cuối mỗi trang */
+    showLegend:true,
+    showPlaceDate:true, placeDate:'…………, ngày …… tháng …… năm ………',
+    showSign:true,      signs:['GIÁO VIÊN CHỦ NHIỆM','TỔ TRƯỞNG CHUYÊN MÔN','HIỆU TRƯỞNG'],
+    note:''                                             // ghi chú tự do in dưới bảng
+  };
+}
+
 function defaultConfig(){
   return {
     schoolName:'TRƯỜNG TIỂU HỌC HOA SEN',
@@ -36,6 +64,7 @@ function defaultConfig(){
     restarts:60,
     outerTries:5,                 // số phương án bố trí buổi/ngày nghỉ được thử
     polish:8000,
+    exportCfg: defaultExportCfg(),
     weights:{
       prefSession:12,   // đúng buổi ưu tiên của môn
       prefEarly:9,      // môn khó vào tiết sớm

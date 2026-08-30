@@ -4,13 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Phần mềm Xếp Thời khoá biểu Tiểu học</title>
+<!-- Biểu tượng trên thẻ trình duyệt — nhúng thẳng để không cần tệp ảnh rời, chạy được cả khi mở bằng file:// -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='11' fill='%231e5eff'/%3E%3Cg fill='%23fff'%3E%3Crect x='16.4' y='5.4' width='3.4' height='6.6' rx='1.7'/%3E%3Crect x='28.2' y='5.4' width='3.4' height='6.6' rx='1.7'/%3E%3Crect x='19.2' y='19.4' width='10.4' height='7' opacity='.95' fill='%23ffce55'/%3E%3Crect x='29.6' y='26.4' width='10.2' height='7' opacity='.34'/%3E%3C/g%3E%3Cg fill='none' stroke='%23fff'%3E%3Crect x='8.2' y='9.6' width='31.6' height='30.4' rx='5' stroke-width='2.8'/%3E%3Cpath d='M8.2 19.4h31.6' stroke-width='2.8'/%3E%3Cpath d='M19.2 19.4v20.6M29.6 19.4v20.6M8.2 26.4h31.6M8.2 33.4h31.6' stroke-width='1.8' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header class="app-header no-print">
   <div class="brand">
-    <div class="logo">TKB</div>
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <!-- hai gáy sổ ở đầu bảng -->
+        <rect x="15.6" y="2.6" width="3.6" height="7.4" rx="1.8" fill="currentColor"/>
+        <rect x="28.8" y="2.6" width="3.6" height="7.4" rx="1.8" fill="currentColor"/>
+        <!-- ô tiết đã xếp -->
+        <rect x="18.1" y="17.4" width="11.8" height="7.9" fill="#ffce55"/>
+        <rect x="29.9" y="25.3" width="11.6" height="7.9" fill="currentColor" opacity=".34"/>
+        <rect x="6.5" y="33.2" width="11.6" height="7.8" fill="currentColor" opacity=".34"/>
+        <!-- khung bảng + lưới tiết -->
+        <rect x="6.5" y="7" width="35" height="34" rx="5.5" fill="none"
+              stroke="currentColor" stroke-width="2.6"/>
+        <path d="M6.5 17.4h35" stroke="currentColor" stroke-width="2.6"/>
+        <path d="M18.1 17.4v23.6M29.9 17.4v23.6M6.5 25.3h35M6.5 33.2h35"
+              stroke="currentColor" stroke-width="1.6" opacity=".7"/>
+      </svg>
+    </div>
     <div>
       <h1 id="hdSchool">TRƯỜNG TIỂU HỌC</h1>
       <p id="hdYear">Năm học —</p>
@@ -446,6 +464,7 @@
       <label class="chk" title="Hiện toàn bộ lớp / giáo viên / phòng để in một lượt"><input type="checkbox" id="viewAll"> In tất cả</label>
       <span class="spacer"></span>
       <label class="chk" title="In trắng đen, tiết kiệm mực"><input type="checkbox" id="viewMono"> Bản không màu</label>
+      <button class="btn" id="btnExportCfg" title="Chọn những gì hiện lên bản Word/PDF và xem trước đúng khổ giấy">⚙ Tuỳ chỉnh bản in</button>
       <button class="btn" id="btnWord">Xuất Word (.docx)</button>
       <button class="btn" id="btnPdf">Xuất PDF</button>
       <button class="btn" id="btnCsv">Xuất CSV</button>
@@ -529,6 +548,37 @@
       <span class="spacer"></span>
       <button class="btn" id="mdCancel">Huỷ</button>
       <button class="btn btn-primary" id="mdSave">Lưu phân công</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HỘP THOẠI TUỲ CHỈNH BẢN IN ============ -->
+<div id="exmodal" class="modal" hidden>
+  <div class="modal-box ex-box" role="dialog" aria-modal="true" aria-labelledby="exTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="exTitle">Tuỳ chỉnh bản in</h3>
+        <p>Chọn những gì được in ra Word và PDF. Bên phải là bản xem trước đúng khổ giấy thật —
+           sửa bên trái thấy đổi ngay bên phải. Bấm «Lưu cấu hình» để dùng lại cho các lần sau.</p>
+      </div>
+      <button class="modal-x" id="exClose" title="Đóng, bỏ thay đổi">×</button>
+    </div>
+    <div class="ex-body">
+      <div class="ex-form" id="exForm"></div>
+      <div class="ex-prev">
+        <div class="ex-prev-bar">Xem trước <span class="tcount" id="exCount"></span></div>
+        <div class="ex-prev-scroll">
+          <div class="ex-paper" id="exPaper"><iframe id="exPrev" title="Xem trước bản in"></iframe></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" id="exReset">Về mặc định</button>
+      <span class="spacer"></span>
+      <button class="btn" id="exCancel">Huỷ</button>
+      <button class="btn" id="exWord">Xuất Word</button>
+      <button class="btn" id="exPdf">Xuất PDF</button>
+      <button class="btn btn-primary" id="exSave">Lưu cấu hình</button>
     </div>
   </div>
 </div>

@@ -52,6 +52,9 @@ function normalize(s){
   s.config = Object.assign({}, d.config, s.config||{});
   s.config.weights = Object.assign({}, d.config.weights, s.config.weights||{});
   s.config.rules   = Object.assign({}, d.config.rules,   s.config.rules||{});
+  s.config.exportCfg = Object.assign({}, d.config.exportCfg, s.config.exportCfg||{});
+  const sg=s.config.exportCfg.signs;
+  s.config.exportCfg.signs = (Array.isArray(sg)?sg:[]).concat(['','','']).slice(0,3);
   s.config.offSessions = s.config.offSessions||[];
   ['subjects','rooms','classes','teachers'].forEach(k=>{ if(!Array.isArray(s[k])||!s[k].length) s[k]=d[k]; });
   s.subjects.forEach(x=>{
@@ -1032,7 +1035,7 @@ function ttHeader(title, meta){
     <div class="sch">${esc(c.schoolName)}</div>
     <div class="ttl">${esc(title)}</div>
     <div class="meta">Năm học ${esc(c.schoolYear)} — ${esc(c.semester)}${c.appliedFrom?' • Áp dụng từ '+esc(c.appliedFrom):''}</div>
-  </div>${meta?`<div style="text-align:center;font-size:12.5px;color:var(--ink-2);margin-bottom:8px">${meta}</div>`:''}`;
+  </div>${meta?`<div class="sub-meta" style="text-align:center;font-size:12.5px;color:var(--ink-2);margin-bottom:8px">${meta}</div>`:''}`;
 }
 function ttFoot(){
   return `<div class="tt-foot">
@@ -1044,7 +1047,7 @@ function tableOpen(){
   return `<table class="tt"><thead><tr><th class="rh">Tiết</th>${ST.config.days.map(d=>`<th>${DAY_NAME[d]}</th>`).join('')}</tr></thead><tbody>`;
 }
 function rowHead(r){
-  const cl=r.clock?`<br><span style="font-weight:400;font-size:10px;color:#5a6b86">${r.clock.from}–${r.clock.to}</span>`:'';
+  const cl=r.clock?`<br><span class="clk" style="font-weight:400;font-size:10px;color:#5a6b86">${r.clock.from}–${r.clock.to}</span>`:'';
   return `<th class="rh">${SESSION_NAME[r.ss]} ${r.p}${cl}</th>`;
 }
 /* ---------- Khoá tiết & kéo thả ---------- */
@@ -1167,10 +1170,10 @@ function renderClassTT(c){
         const s=subById(cell.sub)||{}, t=teaById(cell.tea)||{}, rm=roomById(cell.room);
         const mg=mergedWith(sol,i,cell.tea,c.id);
         h+=`<td${tdAttr(c.id,i)} data-sub="${cell.sub}" style="background:${s.color||'#fff'}"><div class="cell">
-          <span class="s">${esc(s.short||cell.sub)}</span>
-          <span class="t">${esc(shortName(t.name))}</span>
-          ${mg.length?`<span class="m">ghép ${esc(mg.join('+'))}</span>`:''}
-          ${rm?`<span class="r">${esc(rm.name)}</span>`:''}</div></td>`;
+          <span class="s" data-role="subject" data-full="${esc(s.name||'')}">${esc(s.short||cell.sub)}</span>
+          <span class="t" data-role="teacher" data-full="${esc(t.name||'')}">${esc(shortName(t.name))}</span>
+          ${mg.length?`<span class="m" data-role="merge">ghép ${esc(mg.join('+'))}</span>`:''}
+          ${rm?`<span class="r" data-role="room">${esc(rm.name)}</span>`:''}</div></td>`;
       } else {
         const k=`${d}-${r.ss}-${r.p}`;
         h+=`<td${tdAttr(c.id,i)}><div class="cell free">${blocked.has(k)?'Nghỉ':'—'}</div></td>`;
@@ -1201,9 +1204,9 @@ function renderTeacherTT(t){
         total++; if(r.ss==='C') aftDays.add(d);
         h+=`<td${tdAttr(list[0].id,i)} data-sub="${cell.sub}" style="background:${s.color||'#fff'}"><div class="cell">
           <span class="s">${esc(list.map(c=>c.name).join(' + '))}</span>
-          <span class="t">${esc(s.short)}</span>
-          ${list.length>1?'<span class="m">dồn lớp</span>':''}
-          ${rm?`<span class="r">${esc(rm.name)}</span>`:''}</div></td>`;
+          <span class="t" data-role="subject" data-full="${esc(s.name||'')}">${esc(s.short)}</span>
+          ${list.length>1?'<span class="m" data-role="merge">dồn lớp</span>':''}
+          ${rm?`<span class="r" data-role="room">${esc(rm.name)}</span>`:''}</div></td>`;
       } else {
         const k=`${d}-${r.ss}-${r.p}`;
         h+=`<td${tdAttr(null,i)}><div class="cell free">${busy.has(k)?'Nghỉ':''}</div></td>`;
@@ -1234,10 +1237,11 @@ function renderRoomTT(r){
       if(i>=0) ST.classes.forEach(c=>{ const cell=sol.grid[c.id][i]; if(cell&&cell.room===r.id) list.push({c,cell}); });
       if(list.length){
         const s=subById(list[0].cell.sub)||{};
+        const rt=teaById(list[0].cell.tea)||{};
         h+=`<td data-sub="${list[0].cell.sub}" style="background:${s.color||'#fff'}"><div class="cell">
           <span class="s">${list.map(x=>esc(x.c.name)).join(' + ')}</span>
-          <span class="t">${esc(s.short)}</span>
-          <span class="r">${esc(shortName((teaById(list[0].cell.tea)||{}).name))}</span></div></td>`;
+          <span class="t" data-role="subject" data-full="${esc(s.name||'')}">${esc(s.short)}</span>
+          <span class="r" data-role="teacher" data-full="${esc(rt.name||'')}">${esc(shortName(rt.name))}</span></div></td>`;
       } else h+=`<td><div class="cell free">—</div></td>`;
     });
     h+='</tr>';
@@ -1260,8 +1264,9 @@ function renderMaster(){
       ST.classes.forEach(c=>{
         const i=slotIndexOf(sol,d,r.ss,r.p), cell=i>=0?sol.grid[c.id][i]:null;
         if(cell){ const s=subById(cell.sub)||{};
-          h+=`<td data-sub="${cell.sub}" style="background:${s.color}">${esc(s.short)}</td>`;
-        } else h+='<td style="color:#8b99b0">—</td>';
+          h+=`<td data-sub="${cell.sub}" data-role="subject" data-full="${esc(s.name||'')}"
+               style="background:${s.color}">${esc(s.short)}</td>`;
+        } else h+='<td class="mt-free" style="color:#8b99b0">—</td>';
       });
       h+='</tr>';
     });
@@ -1303,38 +1308,120 @@ function renderView(keepTarget){
 }
 $('#btnPrint').addEventListener('click',()=>window.print());
 
-/* ---------------- Xuất Word / PDF ---------------- */
-const EXPORT_CSS = `
-@page{size:A4 landscape;margin:10mm}
+/* ===========================================================
+   XUẤT WORD / PDF
+   Cấu hình «những gì hiện lên tờ giấy» nằm ở ST.config.exportCfg,
+   sửa trong hộp thoại «Tuỳ chỉnh bản in» và được lưu cùng dữ liệu.
+   Bản xem trước, bản PDF và bản Word đều dựng từ CÙNG một cây DOM
+   (hàm exportRoot) nên xem sao thì in ra đúng vậy.
+   =========================================================== */
+/* Luôn trả về CÙNG một object — chỉ bù các khoá còn thiếu, không thay thế,
+   để mọi nơi đang giữ tham chiếu (hộp thoại, bản nháp huỷ bỏ) vẫn trỏ đúng chỗ. */
+function exCfg(){
+  const c=ST.config, d=defaultExportCfg();
+  if(!c.exportCfg || typeof c.exportCfg!=='object') c.exportCfg={};
+  Object.keys(d).forEach(k=>{ if(c.exportCfg[k]===undefined) c.exportCfg[k]=d[k]; });
+  const sg=c.exportCfg.signs;
+  c.exportCfg.signs=(Array.isArray(sg)?sg:[]).concat(['','','']).slice(0,3);
+  return c.exportCfg;
+}
+function paperSize(E){
+  return E.orientation==='portrait' ? {w:794,h:1123} : {w:1123,h:794};
+}
+function exportCSS(E){
+  const k=Math.max(60,Math.min(150,+E.fontScale||100))/100;
+  const page = E.orientation==='portrait' ? 'A4 portrait' : 'A4 landscape';
+  const css = `
+@page{size:${page};margin:10mm}
+:root{--k:${k}}
 *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
-body{font-family:"Times New Roman","Arial Unicode MS",serif;font-size:12pt;color:#000;margin:0}
+body{font-family:"Times New Roman","Arial Unicode MS",serif;font-size:calc(12pt*var(--k));color:#000;margin:0}
 .tt-block{page-break-after:always;margin-bottom:8mm}
 .tt-block:last-child{page-break-after:auto}
 .tt-head{text-align:center;margin-bottom:8px}
-.tt-head .sch{font-size:11pt;text-transform:uppercase}
-.tt-head .ttl{font-size:16pt;font-weight:bold;margin:4px 0}
-.tt-head .meta{font-size:11pt}
+.tt-head .dept{font-size:calc(10.5pt*var(--k));text-transform:uppercase}
+.tt-head .sch{font-size:calc(11pt*var(--k));text-transform:uppercase}
+.tt-head .ttl{font-size:calc(16pt*var(--k));font-weight:bold;margin:4px 0}
+.tt-head .meta{font-size:calc(11pt*var(--k))}
+.sub-meta{text-align:center;font-size:calc(10.5pt*var(--k));margin-bottom:6px}
 table.tt,table.master{width:100%;border-collapse:collapse}
 table.tt td,table.tt th,table.master td,table.master th{
-  border:1px solid #000;padding:4px 3px;text-align:center;vertical-align:middle;font-size:10.5pt}
+  border:1px solid #000;padding:4px 3px;text-align:center;vertical-align:middle;font-size:calc(10.5pt*var(--k))}
 table.tt thead th,table.master th{font-weight:bold}
-table.tt th.rh{font-weight:bold;font-size:9.5pt}
+table.tt th.rh{font-weight:bold;font-size:calc(9.5pt*var(--k))}
 .cell{display:block}
-.cell .s{font-weight:bold;display:block;font-size:10.5pt}
-.cell .t{display:block;font-size:9pt}
-.cell .r{display:block;font-size:8.5pt;font-style:italic}
-.cell .m{font-size:8pt;font-weight:bold}
+.cell .s{font-weight:bold;display:block;font-size:calc(10.5pt*var(--k))}
+.cell .t{display:block;font-size:calc(9pt*var(--k))}
+.cell .r{display:block;font-size:calc(8.5pt*var(--k));font-style:italic}
+.cell .m{font-size:calc(8pt*var(--k));font-weight:bold}
 .cell.free,.cell.off{font-style:italic}
-.legend{margin-top:8px;font-size:9.5pt}
+.legend{margin-top:8px;font-size:calc(9.5pt*var(--k))}
 .legend span{display:inline-block;border:1px solid #000;padding:1px 6px;margin:2px}
-.tt-foot{display:table;width:100%;margin-top:12mm;font-size:11pt;text-align:center}
-.tt-foot div{display:table-cell;width:33.33%}
+.tt-note{margin-top:8px;font-size:calc(10.5pt*var(--k));font-style:italic;text-align:left;white-space:pre-wrap}
+.tt-place{margin-top:8px;font-size:calc(11pt*var(--k));font-style:italic;text-align:right}
+.tt-foot{display:table;width:100%;margin-top:10mm;font-size:calc(11pt*var(--k));text-align:center}
+.tt-foot div{display:table-cell}
 .tt-foot b{display:block;margin-bottom:16mm}
 `;
-const EXPORT_MONO = `
+  const mono = `
 *{background:#fff !important;background-color:#fff !important;color:#000 !important}
 table.tt td,table.tt th,table.master td,table.master th{border:1px solid #000 !important}
 `;
+  return css + (E.mono ? mono : '');
+}
+
+/* Áp cấu hình lên MỘT BẢN SAO của bảng đang xem — bản gốc trên web không đổi */
+function applyExportCfg(root, E){
+  root.querySelectorAll('.no-print').forEach(n=>n.remove());
+  root.querySelectorAll('[data-i]').forEach(n=>{               // xoá dấu vết kéo thả
+    n.removeAttribute('data-i'); n.removeAttribute('data-cid'); n.removeAttribute('draggable');
+    n.classList.remove('drag-on','locked','dragging','drop-hint');
+    if(!n.getAttribute('class')) n.removeAttribute('class');
+  });
+  root.querySelectorAll('.hit').forEach(n=>n.classList.remove('hit'));   // bỏ trạng thái lọc môn
+
+  const drop=(sel,on)=>{ if(!on) root.querySelectorAll(sel).forEach(n=>n.remove()); };
+  drop('.cell [data-role="subject"]', E.showSubject);
+  drop('.cell [data-role="teacher"]', E.showTeacher);
+  drop('.cell [data-role="room"]',    E.showRoom);
+  drop('.cell [data-role="merge"]',   E.showMerge);
+  drop('.rh .clk',       E.showClock);
+  drop('.tt-head .sch',  E.showSchool);
+  drop('.tt-head .meta', E.showMeta);
+  drop('.sub-meta',      E.showSubMeta);
+  drop('.legend',        E.showLegend);
+
+  const full=(role,on)=>{ if(!on) return;
+    root.querySelectorAll(`[data-role="${role}"][data-full]`).forEach(n=>{
+      if(n.dataset.full) n.textContent=n.dataset.full; });
+  };
+  full('teacher', E.showTeacher && E.teacherName==='full');
+  full('subject', E.showSubject && E.subjectName==='full');
+
+  if(!E.emptyDash) root.querySelectorAll('.cell.free, td.mt-free').forEach(n=>n.textContent='');
+
+  if(E.showDept && String(E.deptName||'').trim())
+    root.querySelectorAll('.tt-head').forEach(h=>
+      h.insertAdjacentHTML('afterbegin',`<div class="dept">${esc(String(E.deptName).trim())}</div>`));
+
+  root.querySelectorAll('.tt-block').forEach(b=>{
+    const old=b.querySelector('.tt-foot'); if(old) old.remove();
+    if(String(E.note||'').trim())
+      b.insertAdjacentHTML('beforeend',`<div class="tt-note">${esc(String(E.note).trim())}</div>`);
+    if(E.showPlaceDate && String(E.placeDate||'').trim())
+      b.insertAdjacentHTML('beforeend',`<div class="tt-place">${esc(String(E.placeDate).trim())}</div>`);
+    const signs=(E.signs||[]).map(x=>String(x||'').trim()).filter(Boolean);
+    if(E.showSign && signs.length)
+      b.insertAdjacentHTML('beforeend',
+        `<div class="tt-foot">${signs.map(s=>
+          `<div style="width:${(100/signs.length).toFixed(2)}%"><b>${esc(s)}</b></div>`).join('')}</div>`);
+  });
+  return root;
+}
+/* Cây DOM dùng chung cho xem trước, PDF và Word */
+function exportRoot(){
+  return applyExportCfg($('#viewArea').cloneNode(true), exCfg());
+}
 function exportName(){
   const m={class:'lop',teacher:'giao-vien',room:'phong',master:'tong-hop'}[VIEW.mode]||'tkb';
   const all=$('#viewAll').checked && VIEW.mode!=='master';
@@ -1342,47 +1429,161 @@ function exportName(){
   return ('TKB-'+m+'-'+t).normalize('NFD').replace(/[̀-ͯ]/g,'')
          .replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^A-Za-z0-9\-]+/g,'-').replace(/-+/g,'-');
 }
-function exportDocHTML(mono){
-  const area=$('#viewArea').cloneNode(true);
-  area.querySelectorAll('.no-print').forEach(n=>n.remove());          // bỏ dòng "Lập lúc / điểm tối ưu"
-  area.querySelectorAll('[data-i]').forEach(n=>{
-    n.removeAttribute('data-i'); n.removeAttribute('data-cid'); n.removeAttribute('draggable');
-    n.classList.remove('drag-on','locked','dragging','drop-hint');
-    if(!n.getAttribute('class')) n.removeAttribute('class');
-  });
-  const c=ST.config;
+function exportDocHTML(){
+  const c=ST.config, E=exCfg();
   return '<!DOCTYPE html><html><head><meta charset="utf-8">'
     + '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
     + `<title>${esc(c.schoolName)} — ${esc(c.semester)}</title>`
-    + `<style>${EXPORT_CSS}${mono?EXPORT_MONO:''}</style></head><body>`
-    + area.innerHTML + '</body></html>';
+    + `<style>${exportCSS(E)}</style></head><body>`
+    + exportRoot().innerHTML + '</body></html>';
 }
 function needSolution(){
   if(!ST.solution || solutionStale()){ toast('Chưa có thời khoá biểu hợp lệ.','err'); return false; }
   return true;
 }
-$('#btnWord').addEventListener('click',()=>{
+function doWord(){
   if(!needSolution()) return;
-  const clone=$('#viewArea').cloneNode(true);
-  clone.querySelectorAll('.no-print').forEach(n=>n.remove());   // bỏ dòng thông tin phần mềm
+  const E=exCfg();
   let blob=null;
-  try{ blob=Docx.build(clone, $('#viewMono').checked); }
+  try{ blob=Docx.build(exportRoot(), {mono:E.mono, scale:(+E.fontScale||100)/100,
+                                      orientation:E.orientation}); }
   catch(err){ console.error(err); return toast('Lỗi tạo file Word: '+err.message,'err'); }
   if(!blob) return toast('Chưa có bảng nào để xuất.','err');
   dl(blob, exportName()+'.docx');
   toast('Đã xuất .docx — mở và chỉnh sửa trực tiếp trong Microsoft Word.','ok');
-});
-$('#btnPdf').addEventListener('click',()=>{
+}
+function doPdf(){
   if(!needSolution()) return;
-  const html=exportDocHTML($('#viewMono').checked);
   const w=window.open('','_blank');
   if(!w) return toast('Trình duyệt chặn cửa sổ mới — hãy cho phép pop-up rồi thử lại.','err');
-  w.document.open(); w.document.write(html); w.document.close();
+  w.document.open(); w.document.write(exportDocHTML()); w.document.close();
   const go=()=>{ try{ w.focus(); w.print(); }catch(e){} };
   w.onload=go; setTimeout(go,500);
   toast('Trong hộp thoại in: chọn «Lưu thành PDF» và BỎ chọn «Headers and footers».','ok');
+}
+$('#btnWord').addEventListener('click',doWord);
+$('#btnPdf').addEventListener('click',doPdf);
+$('#viewMono').addEventListener('change',e=>{
+  exCfg().mono=e.target.checked; save();
+  if(!$('#exmodal').hidden) exDraw();
 });
-$('#viewMono').addEventListener('change',()=>renderView(true));
+
+/* ===========================================================
+   HỘP THOẠI «TUỲ CHỈNH BẢN IN» — sửa bên trái, xem trước bên phải
+   =========================================================== */
+const EX_FIELDS = [
+  ['Đầu trang', [
+    ['showDept',  'chk',  'In tên cơ quan chủ quản'],
+    ['deptName',  'text', 'Tên cơ quan chủ quản', 'showDept'],
+    ['showSchool','chk',  'In tên trường'],
+    ['showMeta',  'chk',  'In dòng năm học – học kỳ – ngày áp dụng'],
+    ['showSubMeta','chk', 'In dòng phụ (GVCN, sĩ số, ghi chú lớp)']
+  ]],
+  ['Nội dung ô tiết', [
+    ['showSubject','chk', 'In tên môn học'],
+    ['subjectName','sel', 'Kiểu tên môn', 'showSubject',
+      [['short','Viết tắt — VD: Tiếng Việt'],['full','Đầy đủ — VD: Tiếng Việt']]],
+    ['showTeacher','chk', 'In tên giáo viên'],
+    ['teacherName','sel', 'Kiểu tên giáo viên', 'showTeacher',
+      [['short','Viết tắt — VD: N. Thị Lan'],['full','Đầy đủ — VD: Nguyễn Thị Lan']]],
+    ['showRoom',  'chk',  'In phòng chức năng'],
+    ['showMerge', 'chk',  'In nhãn dồn lớp'],
+    ['emptyDash', 'chk',  'Ô trống in dấu “—” (bỏ chọn để trắng)']
+  ]],
+  ['Trang giấy', [
+    ['orientation','sel', 'Hướng giấy', null,
+      [['landscape','A4 nằm ngang'],['portrait','A4 dựng đứng']]],
+    ['fontScale', 'num',  'Cỡ chữ (%)', null, {min:70, max:130, step:5}],
+    ['showClock', 'chk',  'In giờ vào – ra của mỗi tiết'],
+    ['mono',      'chk',  'Bản không màu (in trắng đen)'],
+    ['showLegend','chk',  'In chú giải môn học ở cuối bảng']
+  ]],
+  ['Cuối trang', [
+    ['note',      'area', 'Ghi chú in dưới bảng'],
+    ['showPlaceDate','chk','In dòng nơi chốn – ngày tháng'],
+    ['placeDate', 'text', 'Nội dung dòng ngày tháng', 'showPlaceDate'],
+    ['showSign',  'chk',  'In các ô ký tên'],
+    ['sign0',     'text', 'Ô ký 1 (để trống là bỏ)', 'showSign'],
+    ['sign1',     'text', 'Ô ký 2 (để trống là bỏ)', 'showSign'],
+    ['sign2',     'text', 'Ô ký 3 (để trống là bỏ)', 'showSign']
+  ]]
+];
+function exGet(E,k){ return /^sign\d$/.test(k) ? (E.signs||[])[+k.slice(4)]||'' : E[k]; }
+function exSet(E,k,v){ if(/^sign\d$/.test(k)){ E.signs=E.signs||['','','']; E.signs[+k.slice(4)]=v; } else E[k]=v; }
+
+function exRenderForm(){
+  const E=exCfg();
+  $('#exForm').innerHTML = EX_FIELDS.map(([grp,items])=>
+    `<div class="ex-grp">${esc(grp)}</div>` + items.map(([k,type,label,dep,extra])=>{
+      const off = dep && !E[dep];
+      const v = exGet(E,k);
+      if(type==='chk')
+        return `<label class="ex-row"><input type="checkbox" data-k="${k}"${v?' checked':''}>
+                <span>${esc(label)}</span></label>`;
+      const dis = off?' disabled':'';
+      let ctl;
+      if(type==='sel')
+        ctl=`<select data-k="${k}"${dis}>${extra.map(([ov,ot])=>
+            `<option value="${ov}"${v===ov?' selected':''}>${esc(ot)}</option>`).join('')}</select>`;
+      else if(type==='num')
+        ctl=`<input type="number" data-k="${k}" value="${esc(v)}" min="${extra.min}" max="${extra.max}" step="${extra.step}"${dis}>`;
+      else if(type==='area')
+        ctl=`<textarea data-k="${k}" rows="2" placeholder="Để trống nếu không in"${dis}>${esc(v)}</textarea>`;
+      else
+        ctl=`<input type="text" data-k="${k}" value="${esc(v)}"${dis}>`;
+      return `<label class="ex-field${off?' off':''}"><span>${esc(label)}</span>${ctl}</label>`;
+    }).join('')).join('');
+}
+function exDraw(){
+  const E=exCfg(), P=paperSize(E);
+  const wrap=$('#exPaper'), fr=$('#exPrev');
+  const avail=Math.max(240, wrap.parentElement.clientWidth-28);
+  const k=Math.min(1, avail/P.w);
+  fr.style.width=P.w+'px'; fr.style.height=P.h+'px';
+  fr.style.transform=`scale(${k})`;
+  wrap.style.width=(P.w*k)+'px'; wrap.style.height=(P.h*k)+'px';
+  fr.srcdoc=exportDocHTML();
+  const n=$('#viewArea').querySelectorAll('.tt-block').length;
+  $('#exCount').textContent = n>1 ? `${n} trang — xem trước trang đầu` : '1 trang';
+  $('#viewMono').checked = !!E.mono;
+}
+function openExport(){
+  if(!needSolution()) return;
+  EX_BACKUP=JSON.stringify(exCfg());
+  $('#exmodal').hidden=false;
+  exRenderForm(); exDraw();
+}
+let EX_BACKUP=null;
+function closeExport(){ $('#exmodal').hidden=true; }
+$('#btnExportCfg').addEventListener('click',openExport);
+$('#exClose').addEventListener('click',()=>{                    // đóng = huỷ thay đổi
+  if(EX_BACKUP) ST.config.exportCfg=JSON.parse(EX_BACKUP);
+  closeExport(); $('#viewMono').checked=!!exCfg().mono;
+});
+$('#exCancel').addEventListener('click',()=>$('#exClose').click());
+$('#exmodal').addEventListener('click',e=>{ if(e.target.id==='exmodal') $('#exClose').click(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('#exmodal').hidden) $('#exClose').click(); });
+$('#exForm').addEventListener('input',e=>{
+  const el=e.target, k=el.dataset.k; if(!k) return;
+  const E=exCfg();
+  exSet(E, k, el.type==='checkbox' ? el.checked
+           : el.type==='number'    ? Math.max(70,Math.min(130,+el.value||100))
+           : el.value);
+  if(el.type==='checkbox' || el.tagName==='SELECT') exRenderForm();   // bật/tắt ô phụ thuộc
+  exDraw();
+});
+$('#exSave').addEventListener('click',()=>{
+  save(); EX_BACKUP=JSON.stringify(exCfg());
+  toast('Đã lưu cấu hình bản in — sẽ dùng cho mọi lần xuất sau.','ok');
+});
+$('#exReset').addEventListener('click',()=>{
+  if(!confirm('Đưa mọi tuỳ chọn bản in về mặc định?')) return;
+  ST.config.exportCfg=defaultExportCfg();
+  exRenderForm(); exDraw();
+});
+$('#exWord').addEventListener('click',()=>{ save(); doWord(); });
+$('#exPdf').addEventListener('click',()=>{ save(); doPdf(); });
+window.addEventListener('resize',()=>{ if(!$('#exmodal').hidden) exDraw(); });
 
 /* ---------------- Kéo thả & khoá tiết ---------------- */
 $('#dragMode').addEventListener('change',e=>{
@@ -1659,6 +1860,7 @@ function renderAll(){
   renderHeader(); renderConfig(); renderSubjects(); renderClasses();
   renderTeachers(); renderRooms(); renderRules(); renderOff(); renderLoad(); renderView(); renderCheck(); renderLockInfo();
   $('#bkAuto').checked=bkAutoOn(); bkRender();
+  $('#viewMono').checked=!!exCfg().mono;
   enhanceSelects(document); refreshFilters();
 }
 renderAll();
