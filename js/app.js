@@ -52,9 +52,24 @@ function normalize(s){
   s.config = Object.assign({}, d.config, s.config||{});
   s.config.weights = Object.assign({}, d.config.weights, s.config.weights||{});
   s.config.rules   = Object.assign({}, d.config.rules,   s.config.rules||{});
-  s.config.exportCfg = Object.assign({}, d.config.exportCfg, s.config.exportCfg||{});
-  const sg=s.config.exportCfg.signs;
-  s.config.exportCfg.signs = (Array.isArray(sg)?sg:[]).concat(['','','']).slice(0,3);
+  const ex0=s.config.exportCfg||{};
+  if(Array.isArray(ex0.signs)){                     // bản cũ: 3 ô ký nằm trong một mảng
+    ex0.signLeft   = ex0.signs[0]||'';
+    ex0.signCenter = ex0.signs[1]||'';
+    ex0.signRight  = ex0.signs[2]||'';
+    delete ex0.signs;
+  }
+  if(ex0.deptName!==undefined){ ex0.tplDept=ex0.deptName; delete ex0.deptName; }
+  if(ex0.placeDate!==undefined){ ex0.textPlaceDate=ex0.placeDate; delete ex0.placeDate; }
+  if(ex0.note!==undefined){ ex0.textNote=ex0.note; ex0.showNote=!!String(ex0.note).trim(); delete ex0.note; }
+  if(ex0.emptyDash!==undefined){ ex0.showEmpty=!!ex0.emptyDash; delete ex0.emptyDash; }
+  if(ex0.showSubMeta===false){                      // bản cũ gộp cả dòng phụ vào một công tắc
+    ['showHomeroom','showSize','showClassNote','showTeaName','showTeaKind',
+     'showTeaRole','showTeaOff','showTeaNote','showRoomCap'].forEach(k=>ex0[k]=false);
+  }
+  if(ex0.showMeta===false) ex0.showYear=ex0.showSemester=ex0.showFrom=false;
+  delete ex0.showSubMeta; delete ex0.showMeta;
+  s.config.exportCfg = Object.assign({}, d.config.exportCfg, ex0);
   s.config.offSessions = s.config.offSessions||[];
   ['subjects','rooms','classes','teachers'].forEach(k=>{ if(!Array.isArray(s[k])||!s[k].length) s[k]=d[k]; });
   s.subjects.forEach(x=>{
@@ -1029,13 +1044,27 @@ function ttRows(){
 function slotIndexOf(sol,d,ss,p){ return sol.slots.findIndex(s=>s.day===d&&s.session===ss&&s.period===p); }
 function offTd(){ return `<td class="off-cell"><div class="cell off">NGHỈ</div></td>`; }
 
-function ttHeader(title, meta){
+/* Mỗi mẩu chữ trên bản in là một <span data-part> mang sẵn GIÁ TRỊ THÔ (data-val).
+   Nhờ vậy bản xuất có thể bật/tắt và thay mẫu chữ của từng mẩu một cách độc lập. */
+function part(name, val, html, bold){
+  return `<span data-part="${name}" data-val="${esc(val==null?'':val)}"${bold?' data-bold="1"':''}`
+       + `>${html==null?esc(val):html}</span>`;
+}
+const PART_SEP = '<span class="sep"> • </span>';
+
+function ttHeader(tpl, titleVal, titleText, subParts){
   const c=ST.config;
+  const meta=[
+    part('year', c.schoolYear, 'Năm học '+esc(c.schoolYear)),
+    part('semester', c.semester),
+    c.appliedFrom ? part('from', c.appliedFrom, 'Áp dụng từ '+esc(c.appliedFrom)) : ''
+  ].filter(Boolean);
+  const sub=(subParts||[]).filter(Boolean);
   return `<div class="tt-head">
-    <div class="sch">${esc(c.schoolName)}</div>
-    <div class="ttl">${esc(title)}</div>
-    <div class="meta">Năm học ${esc(c.schoolYear)} — ${esc(c.semester)}${c.appliedFrom?' • Áp dụng từ '+esc(c.appliedFrom):''}</div>
-  </div>${meta?`<div class="sub-meta" style="text-align:center;font-size:12.5px;color:var(--ink-2);margin-bottom:8px">${meta}</div>`:''}`;
+    <div class="sch" data-part="school" data-val="${esc(c.schoolName)}">${esc(c.schoolName)}</div>
+    <div class="ttl" data-part="title" data-tpl="${tpl}" data-val="${esc(titleVal||'')}">${esc(titleText)}</div>
+    <div class="meta">${meta.join(PART_SEP)}</div>
+  </div>${sub.length?`<div class="sub-meta">${sub.join(PART_SEP)}</div>`:''}`;
 }
 function ttFoot(){
   return `<div class="tt-foot">
@@ -1044,11 +1073,15 @@ function ttFoot(){
     <div><b>HIỆU TRƯỞNG</b></div></div>`;
 }
 function tableOpen(){
-  return `<table class="tt"><thead><tr><th class="rh">Tiết</th>${ST.config.days.map(d=>`<th>${DAY_NAME[d]}</th>`).join('')}</tr></thead><tbody>`;
+  return `<table class="tt"><thead><tr><th class="rh" data-part="periodcol">Tiết</th>`
+    + ST.config.days.map(d=>`<th data-part="day" data-d="${d}">${DAY_NAME[d]}</th>`).join('')
+    + `</tr></thead><tbody>`;
 }
 function rowHead(r){
-  const cl=r.clock?`<br><span class="clk" style="font-weight:400;font-size:10px;color:#5a6b86">${r.clock.from}–${r.clock.to}</span>`:'';
-  return `<th class="rh">${SESSION_NAME[r.ss]} ${r.p}${cl}</th>`;
+  const cl=r.clock?`<br><span class="clk" data-from="${r.clock.from}" data-to="${r.clock.to}"
+    style="font-weight:400;font-size:10px;color:#5a6b86">${r.clock.from}–${r.clock.to}</span>`:'';
+  return `<th class="rh" data-part="rowhead" data-ss="${r.ss}" data-p="${r.p}"
+    ><span class="rh-t">${SESSION_NAME[r.ss]} ${r.p}</span>${cl}</th>`;
 }
 /* ---------- Khoá tiết & kéo thả ---------- */
 let DRAG=false, DRAGSRC=null;
@@ -1159,8 +1192,12 @@ function mergedWith(sol,i,tea,cid){
 function renderClassTT(c){
   const sol=ST.solution;
   const blocked=new Set(ST.blocks.filter(b=>b.classId===c.id).map(b=>b.slot));
-  let h=`<div class="tt-block">${ttHeader('THỜI KHOÁ BIỂU LỚP '+c.name,
-    `Giáo viên chủ nhiệm: <b>${esc((teaById(c.homeroom)||{}).name||'—')}</b> • Sĩ số: ${c.size}${c.note?' • '+esc(c.note):''}`)}${tableOpen()}`;
+  const hr=(teaById(c.homeroom)||{}).name||'—';
+  let h=`<div class="tt-block">${ttHeader('class', c.name, 'THỜI KHOÁ BIỂU LỚP '+c.name, [
+    part('homeroom', hr, 'Giáo viên chủ nhiệm: <b>'+esc(hr)+'</b>', true),
+    part('size', c.size, 'Sĩ số: '+esc(c.size)),
+    c.note ? part('classnote', c.note) : ''
+  ])}${tableOpen()}`;
   ttRows().forEach(r=>{
     h+=`<tr class="${r.sep?'sess-sep':''}">${rowHead(r)}`;
     ST.config.days.forEach(d=>{
@@ -1189,8 +1226,14 @@ function renderTeacherTT(t){
   const sol=ST.solution;
   let total=0, aft=0;
   const off=sol.offInfo?sol.offInfo[t.id]:null;
-  let h=`<div class="tt-block">${ttHeader('THỜI KHOÁ BIỂU GIÁO VIÊN',
-    `<b>${esc(t.name)}</b> — ${KIND_NAME[t.kind]||''}${t.role?' / '+esc(t.role):''}${off&&off.ok&&!off.none?' • <span style="color:#d93025;font-weight:700">'+esc(off.label)+'</span>':''}${t.note?' • '+esc(t.note):''}`)}${tableOpen()}`;
+  const offTxt=off&&off.ok&&!off.none?off.label:'';
+  let h=`<div class="tt-block">${ttHeader('teacher', t.name, 'THỜI KHOÁ BIỂU GIÁO VIÊN', [
+    part('teaname', t.name, '<b>'+esc(t.name)+'</b>', true),
+    part('teakind', KIND_NAME[t.kind]||''),
+    t.role ? part('tearole', t.role) : '',
+    offTxt ? part('teaoff', offTxt, '<span style="color:#d93025;font-weight:700">'+esc(offTxt)+'</span>') : '',
+    t.note ? part('teanote', t.note) : ''
+  ])}${tableOpen()}`;
   const busy=new Set(t.busy||[]);
   const aftDays=new Set();
   ttRows().forEach(r=>{
@@ -1218,16 +1261,18 @@ function renderTeacherTT(t){
   h+=`</tbody></table>${legendOf([...new Set(sol.slots.map((x,i)=>{
         const c=ST.classes.find(cc=>{const g=sol.grid[cc.id][i];return g&&g.tea===t.id;});
         return c?sol.grid[c.id][i].sub:null; }).filter(Boolean))])}
-      <div class="legend">
-      <span>Tổng số tiết/tuần: <b>${total}</b> / định mức ${t.maxWeek}</span>
-      <span>Số buổi chiều đứng lớp: <b>${aft}</b>${t.maxAfternoons>0?' / tối đa '+t.maxAfternoons:''}</span>
-      ${off&&off.ok&&!off.none?`<span>${esc(off.label)}</span>`:''}</div>`;
+      <div class="legend stats">
+      ${part('teatotal', total+' / định mức '+t.maxWeek, 'Tổng số tiết/tuần: <b>'+total+'</b> / định mức '+t.maxWeek)}
+      ${part('teaaft', aft+(t.maxAfternoons>0?' / tối đa '+t.maxAfternoons:''),
+             'Số buổi chiều đứng lớp: <b>'+aft+'</b>'+(t.maxAfternoons>0?' / tối đa '+t.maxAfternoons:''))}
+      ${offTxt?part('teaoff2', offTxt):''}</div>`;
   return h+ttFoot()+'</div>';
 }
 function renderRoomTT(r){
   const sol=ST.solution;
-  let h=`<div class="tt-block">${ttHeader('LỊCH SỬ DỤNG — '+r.name.toUpperCase(),
-    `Sức chứa đồng thời: <b>${r.cap}</b> lớp`)}${tableOpen()}`;
+  let h=`<div class="tt-block">${ttHeader('room', r.name, 'LỊCH SỬ DỤNG PHÒNG — '+r.name.toUpperCase(), [
+    part('roomcap', r.cap, 'Sức chứa đồng thời: <b>'+esc(r.cap)+'</b> lớp')
+  ])}${tableOpen()}`;
   ttRows().forEach(row=>{
     h+=`<tr class="${row.sep?'sess-sep':''}">${rowHead(row)}`;
     ST.config.days.forEach(d=>{
@@ -1251,12 +1296,12 @@ function renderRoomTT(r){
 }
 function renderMaster(){
   const sol=ST.solution;
-  let h=`<div class="tt-block">${ttHeader('BẢNG TỔNG HỢP THỜI KHOÁ BIỂU TOÀN TRƯỜNG','')}
-    <table class="master"><thead><tr><th>Thứ</th><th>Tiết</th>${ST.classes.map(c=>`<th>${esc(c.name)}</th>`).join('')}</tr></thead><tbody>`;
+  let h=`<div class="tt-block">${ttHeader('master','','BẢNG TỔNG HỢP THỜI KHOÁ BIỂU TOÀN TRƯỜNG',[])}
+    <table class="master"><thead><tr><th>Thứ</th><th data-part="periodcol">Tiết</th>${ST.classes.map(c=>`<th>${esc(c.name)}</th>`).join('')}</tr></thead><tbody>`;
   ST.config.days.forEach(d=>{
     const rows=ttRows();
     rows.forEach((r,k)=>{
-      h+=`<tr>${k===0?`<td class="day" rowspan="${rows.length}">${DAY_SHORT[d]}</td>`:''}<td class="day">${r.ss}${r.p}</td>`;
+      h+=`<tr>${k===0?`<td class="day" data-part="day" data-d="${d}" data-short="1" rowspan="${rows.length}">${DAY_SHORT[d]}</td>`:''}<td class="day">${r.ss}${r.p}</td>`;
       if(sessionOff(d,r.ss)){
         h+=`<td class="off-cell" colspan="${ST.classes.length}" style="color:#8b99b0;font-style:italic">Toàn trường nghỉ</td></tr>`;
         return;
@@ -1321,8 +1366,6 @@ function exCfg(){
   const c=ST.config, d=defaultExportCfg();
   if(!c.exportCfg || typeof c.exportCfg!=='object') c.exportCfg={};
   Object.keys(d).forEach(k=>{ if(c.exportCfg[k]===undefined) c.exportCfg[k]=d[k]; });
-  const sg=c.exportCfg.signs;
-  c.exportCfg.signs=(Array.isArray(sg)?sg:[]).concat(['','','']).slice(0,3);
   return c.exportCfg;
 }
 function paperSize(E){
@@ -1331,37 +1374,54 @@ function paperSize(E){
 function exportCSS(E){
   const k=Math.max(60,Math.min(150,+E.fontScale||100))/100;
   const page = E.orientation==='portrait' ? 'A4 portrait' : 'A4 landscape';
+  const rh = Math.max(0,Math.min(30,+E.rowHeight||0));
   const css = `
 @page{size:${page};margin:10mm}
 :root{--k:${k}}
 *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important}
-body{font-family:"Times New Roman","Arial Unicode MS",serif;font-size:calc(12pt*var(--k));color:#000;margin:0}
-.tt-block{page-break-after:always;margin-bottom:8mm}
+body{font-family:"Times New Roman","Arial Unicode MS",serif;font-size:calc(12pt*var(--k));
+  color:#000;margin:0;line-height:1.25}
+.tt-block{page-break-after:always}
 .tt-block:last-child{page-break-after:auto}
-.tt-head{text-align:center;margin-bottom:8px}
-.tt-head .dept{font-size:calc(10.5pt*var(--k));text-transform:uppercase}
-.tt-head .sch{font-size:calc(11pt*var(--k));text-transform:uppercase}
-.tt-head .ttl{font-size:calc(16pt*var(--k));font-weight:bold;margin:4px 0}
-.tt-head .meta{font-size:calc(11pt*var(--k))}
-.sub-meta{text-align:center;font-size:calc(10.5pt*var(--k));margin-bottom:6px}
-table.tt,table.master{width:100%;border-collapse:collapse}
+
+/* --- đầu trang --- */
+.tt-head{text-align:center}
+.tt-head .dept{font-size:calc(10.5pt*var(--k));text-transform:uppercase;margin-bottom:1mm}
+.tt-head .sch{font-size:calc(11pt*var(--k));text-transform:uppercase;margin-bottom:1mm}
+.tt-head .ttl{font-size:calc(16pt*var(--k));font-weight:bold;margin:1.5mm 0 1mm;line-height:1.2}
+.tt-head .meta{font-size:calc(11pt*var(--k));margin-bottom:1mm}
+.sub-meta{text-align:center;font-size:calc(10.5pt*var(--k))}
+.tt-head+.sub-meta,.tt-head+table,.sub-meta+table{margin-top:0}
+.tt-head,.sub-meta{margin-bottom:2.5mm}
+.sep{white-space:pre}
+
+/* --- bảng --- */
+table.tt,table.master{width:100%;border-collapse:collapse;table-layout:fixed}
 table.tt td,table.tt th,table.master td,table.master th{
-  border:1px solid #000;padding:4px 3px;text-align:center;vertical-align:middle;font-size:calc(10.5pt*var(--k))}
+  border:1px solid #000;padding:1.2mm 1mm;text-align:center;vertical-align:middle;
+  font-size:calc(10.5pt*var(--k));word-wrap:break-word}
+table.tt tbody td,table.tt tbody th{height:${rh?rh+'mm':'auto'}}
 table.tt thead th,table.master th{font-weight:bold}
-table.tt th.rh{font-weight:bold;font-size:calc(9.5pt*var(--k))}
-.cell{display:block}
+table.tt th.rh{font-weight:bold;font-size:calc(9.5pt*var(--k));width:16mm}
+table.tt th.rh .clk{display:block;font-weight:normal;font-size:calc(7.5pt*var(--k));margin-top:.4mm}
+.cell{display:block;line-height:1.2}
 .cell .s{font-weight:bold;display:block;font-size:calc(10.5pt*var(--k))}
-.cell .t{display:block;font-size:calc(9pt*var(--k))}
-.cell .r{display:block;font-size:calc(8.5pt*var(--k));font-style:italic}
-.cell .m{font-size:calc(8pt*var(--k));font-weight:bold}
+.cell .t{display:block;font-size:calc(9pt*var(--k));margin-top:.3mm}
+.cell .r{display:block;font-size:calc(8.5pt*var(--k));font-style:italic;margin-top:.3mm}
+.cell .m{display:block;font-size:calc(8pt*var(--k));font-weight:bold;margin-top:.3mm}
 .cell.free,.cell.off{font-style:italic}
-.legend{margin-top:8px;font-size:calc(9.5pt*var(--k))}
-.legend span{display:inline-block;border:1px solid #000;padding:1px 6px;margin:2px}
-.tt-note{margin-top:8px;font-size:calc(10.5pt*var(--k));font-style:italic;text-align:left;white-space:pre-wrap}
-.tt-place{margin-top:8px;font-size:calc(11pt*var(--k));font-style:italic;text-align:right}
-.tt-foot{display:table;width:100%;margin-top:10mm;font-size:calc(11pt*var(--k));text-align:center}
-.tt-foot div{display:table-cell}
-.tt-foot b{display:block;margin-bottom:16mm}
+
+/* --- cuối trang --- */
+.legend{margin-top:2.5mm;font-size:calc(9.5pt*var(--k))}
+.legend span{display:inline-block;border:1px solid #000;padding:.4mm 1.6mm;margin:.6mm}
+.tt-note{margin-top:3mm;font-size:calc(10.5pt*var(--k));font-style:italic;white-space:pre-wrap}
+.tt-place{margin-top:3mm;font-size:calc(11pt*var(--k));font-style:italic}
+.tt-foot{display:table;width:100%;table-layout:fixed;margin-top:4mm;
+  font-size:calc(11pt*var(--k));text-align:center}
+.tt-foot>div{display:table-cell;width:33.333%;vertical-align:top}
+.tt-foot b{display:block}
+.tt-foot i{display:block;font-size:calc(9.5pt*var(--k));font-weight:normal;margin-top:.6mm}
+.tt-foot .sgap{display:block}
 `;
   const mono = `
 *{background:#fff !important;background-color:#fff !important;color:#000 !important}
@@ -1369,6 +1429,22 @@ table.tt td,table.tt th,table.master td,table.master th{border:1px solid #000 !i
 `;
   return css + (E.mono ? mono : '');
 }
+
+/* Thay {gt} trong mẫu chữ bằng giá trị thật */
+const TPL=(s,v)=>String(s==null?'':s).split('{gt}').join(v==null?'':String(v));
+/* Mỗi mẩu chữ ↔ [công tắc ẩn/hiện, mẫu chữ] */
+const PART_MAP={
+  school:['showSchool','tplSchool'],
+  year:['showYear','tplYear'], semester:['showSemester','tplSemester'], from:['showFrom','tplFrom'],
+  homeroom:['showHomeroom','tplHomeroom'], size:['showSize','tplSize'], classnote:['showClassNote','tplClassNote'],
+  teaname:['showTeaName','tplTeaName'], teakind:['showTeaKind','tplTeaKind'], tearole:['showTeaRole','tplTeaRole'],
+  teaoff:['showTeaOff','tplTeaOff'], teanote:['showTeaNote','tplTeaNote'],
+  roomcap:['showRoomCap','tplRoomCap'],
+  teatotal:['showTeaTotal','tplTeaTotal'], teaaft:['showTeaAft','tplTeaAft'],
+  teaoff2:['showTeaOff','tplTeaOff']
+};
+const TITLE_TPL={class:'tplTitleClass', teacher:'tplTitleTeacher', room:'tplTitleRoom', master:'tplTitleMaster'};
+const ALIGN=a=>({left:'left',center:'center',right:'right'}[a]||'left');
 
 /* Áp cấu hình lên MỘT BẢN SAO của bảng đang xem — bản gốc trên web không đổi */
 function applyExportCfg(root, E){
@@ -1380,16 +1456,14 @@ function applyExportCfg(root, E){
   });
   root.querySelectorAll('.hit').forEach(n=>n.classList.remove('hit'));   // bỏ trạng thái lọc môn
 
+  /* --- 1. Nội dung trong ô tiết --- */
   const drop=(sel,on)=>{ if(!on) root.querySelectorAll(sel).forEach(n=>n.remove()); };
   drop('.cell [data-role="subject"]', E.showSubject);
   drop('.cell [data-role="teacher"]', E.showTeacher);
   drop('.cell [data-role="room"]',    E.showRoom);
   drop('.cell [data-role="merge"]',   E.showMerge);
-  drop('.rh .clk',       E.showClock);
-  drop('.tt-head .sch',  E.showSchool);
-  drop('.tt-head .meta', E.showMeta);
-  drop('.sub-meta',      E.showSubMeta);
-  drop('.legend',        E.showLegend);
+  drop('.rh .clk',  E.showClock);
+  drop('.legend:not(.stats)', E.showLegend);
 
   const full=(role,on)=>{ if(!on) return;
     root.querySelectorAll(`[data-role="${role}"][data-full]`).forEach(n=>{
@@ -1397,24 +1471,76 @@ function applyExportCfg(root, E){
   };
   full('teacher', E.showTeacher && E.teacherName==='full');
   full('subject', E.showSubject && E.subjectName==='full');
+  root.querySelectorAll('.cell.free, td.mt-free').forEach(n=>{
+    n.textContent = E.showEmpty ? String(E.textEmpty==null?'':E.textEmpty) : '';
+  });
 
-  if(!E.emptyDash) root.querySelectorAll('.cell.free, td.mt-free').forEach(n=>n.textContent='');
+  /* --- 2. Từng mẩu chữ: ẩn/hiện và thay mẫu, độc lập nhau --- */
+  root.querySelectorAll('[data-part]').forEach(n=>{
+    const p=n.dataset.part;
+    if(p==='title'){
+      if(!E.showTitle) return n.remove();
+      n.textContent = TPL(E[TITLE_TPL[n.dataset.tpl]||'tplTitleClass'], n.dataset.val);
+      return;
+    }
+    if(p==='periodcol'){ n.textContent=String(E.textPeriodCol||''); return; }
+    if(p==='day'){
+      const d=+n.dataset.d;
+      n.textContent = n.dataset.short ? DAY_SHORT[d]
+        : E.dayStyle==='short' ? DAY_SHORT[d]
+        : E.dayStyle==='upper' ? String(DAY_NAME[d]||'').toUpperCase() : DAY_NAME[d];
+      return;
+    }
+    if(p==='rowhead'){
+      const lb=n.dataset.ss==='S'?E.textMorning:E.textAfternoon;
+      const t=n.querySelector('.rh-t');
+      if(t) t.textContent = String(E.tplRowHead||'{buoi} {tiet}')
+        .split('{buoi}').join(String(lb==null?'':lb))
+        .split('{tiet}').join(n.dataset.p);
+      return;
+    }
+    const m=PART_MAP[p]; if(!m) return;
+    if(!E[m[0]]) return n.remove();
+    const txt=TPL(E[m[1]], n.dataset.val);
+    n.innerHTML = n.dataset.bold ? `<b>${esc(txt)}</b>` : esc(txt);
+  });
 
-  if(E.showDept && String(E.deptName||'').trim())
-    root.querySelectorAll('.tt-head').forEach(h=>
-      h.insertAdjacentHTML('afterbegin',`<div class="dept">${esc(String(E.deptName).trim())}</div>`));
+  /* --- 3. Nối lại các dòng gộp sau khi đã bỏ bớt mẩu --- */
+  const sep=String(E.sepMeta==null?' • ':E.sepMeta);
+  root.querySelectorAll('.tt-head .meta, .sub-meta').forEach(box=>{
+    const kids=[...box.children].filter(k=>k.hasAttribute('data-part'));
+    if(!kids.length) return box.remove();
+    box.innerHTML = kids.map(k=>k.outerHTML).join(`<span class="sep">${esc(sep)}</span>`);
+  });
+  root.querySelectorAll('.legend.stats').forEach(box=>{
+    if(!box.querySelector('[data-part]')) box.remove();
+  });
+  root.querySelectorAll('.tt-head').forEach(hd=>{
+    if(E.showDept && String(E.tplDept||'').trim())
+      hd.insertAdjacentHTML('afterbegin',`<div class="dept">${esc(String(E.tplDept).trim())}</div>`);
+  });
 
+  /* --- 4. Cuối trang: ghi chú, ngày tháng, ba cột ký cố định --- */
+  const gap=Math.max(0,Math.min(60,+E.signGap||0));
   root.querySelectorAll('.tt-block').forEach(b=>{
     const old=b.querySelector('.tt-foot'); if(old) old.remove();
-    if(String(E.note||'').trim())
-      b.insertAdjacentHTML('beforeend',`<div class="tt-note">${esc(String(E.note).trim())}</div>`);
-    if(E.showPlaceDate && String(E.placeDate||'').trim())
-      b.insertAdjacentHTML('beforeend',`<div class="tt-place">${esc(String(E.placeDate).trim())}</div>`);
-    const signs=(E.signs||[]).map(x=>String(x||'').trim()).filter(Boolean);
-    if(E.showSign && signs.length)
+    if(E.showNote && String(E.textNote||'').trim())
       b.insertAdjacentHTML('beforeend',
-        `<div class="tt-foot">${signs.map(s=>
-          `<div style="width:${(100/signs.length).toFixed(2)}%"><b>${esc(s)}</b></div>`).join('')}</div>`);
+        `<div class="tt-note" style="text-align:${ALIGN(E.noteAlign)}">${esc(String(E.textNote).trim())}</div>`);
+    if(E.showPlaceDate && String(E.textPlaceDate||'').trim())
+      b.insertAdjacentHTML('beforeend',
+        `<div class="tt-place" style="text-align:${ALIGN(E.placeAlign)}">${esc(String(E.textPlaceDate).trim())}</div>`);
+    if(!E.showSign) return;
+    // Ba cột Trái – Giữa – Phải luôn giữ chỗ: bỏ bớt chữ ký thì các chữ ký
+    // còn lại vẫn đứng nguyên vị trí, không bị dồn vào giữa.
+    const cells=[E.signLeft,E.signCenter,E.signRight].map(x=>String(x||'').trim());
+    if(!cells.some(Boolean)) return;
+    const hint = E.showSignHint && String(E.textSignHint||'').trim()
+      ? `<i>${esc(String(E.textSignHint).trim())}</i>` : '';
+    b.insertAdjacentHTML('beforeend',
+      `<div class="tt-foot" data-gap="${gap}">${cells.map(s=>
+        `<div>${s?`<b>${esc(s)}</b>${hint}`:''}<span class="sgap" style="height:${gap}mm"></span></div>`
+      ).join('')}</div>`);
   });
   return root;
 }
@@ -1446,7 +1572,7 @@ function doWord(){
   const E=exCfg();
   let blob=null;
   try{ blob=Docx.build(exportRoot(), {mono:E.mono, scale:(+E.fontScale||100)/100,
-                                      orientation:E.orientation}); }
+                                      orientation:E.orientation, rowHeight:E.rowHeight}); }
   catch(err){ console.error(err); return toast('Lỗi tạo file Word: '+err.message,'err'); }
   if(!blob) return toast('Chưa có bảng nào để xuất.','err');
   dl(blob, exportName()+'.docx');
@@ -1471,50 +1597,109 @@ $('#viewMono').addEventListener('change',e=>{
 /* ===========================================================
    HỘP THOẠI «TUỲ CHỈNH BẢN IN» — sửa bên trái, xem trước bên phải
    =========================================================== */
+const AL=[['left','Căn trái'],['center','Căn giữa'],['right','Căn phải']];
+/* [khoá, kiểu, nhãn, khoá-phụ-thuộc, tham số thêm]
+   Kiểu 'tpl' là ô chữ có chỗ trống {gt} — phần mềm thay bằng giá trị thật. */
 const EX_FIELDS = [
-  ['Đầu trang', [
-    ['showDept',  'chk',  'In tên cơ quan chủ quản'],
-    ['deptName',  'text', 'Tên cơ quan chủ quản', 'showDept'],
-    ['showSchool','chk',  'In tên trường'],
-    ['showMeta',  'chk',  'In dòng năm học – học kỳ – ngày áp dụng'],
-    ['showSubMeta','chk', 'In dòng phụ (GVCN, sĩ số, ghi chú lớp)']
+  ['Đầu trang', true, [
+    ['showDept',   'chk', 'In tên cơ quan chủ quản'],
+    ['tplDept',    'text','Chữ in ra', 'showDept'],
+    ['showSchool', 'chk', 'In tên trường'],
+    ['tplSchool',  'tpl', 'Chữ in ra', 'showSchool'],
+    ['showTitle',  'chk', 'In tiêu đề bảng'],
+    ['tplTitleClass',  'tpl','Tiêu đề bản theo lớp', 'showTitle'],
+    ['tplTitleTeacher','tpl','Tiêu đề bản theo giáo viên', 'showTitle'],
+    ['tplTitleRoom',   'tpl','Tiêu đề bản theo phòng', 'showTitle'],
+    ['tplTitleMaster', 'tpl','Tiêu đề bảng tổng hợp', 'showTitle'],
+    ['showYear',     'chk','In năm học'],
+    ['tplYear',      'tpl','Chữ in ra', 'showYear'],
+    ['showSemester', 'chk','In học kỳ'],
+    ['tplSemester',  'tpl','Chữ in ra', 'showSemester'],
+    ['showFrom',     'chk','In ngày áp dụng'],
+    ['tplFrom',      'tpl','Chữ in ra', 'showFrom'],
+    ['sepMeta',      'text','Dấu ngăn giữa các mục cùng dòng']
   ]],
-  ['Nội dung ô tiết', [
-    ['showSubject','chk', 'In tên môn học'],
-    ['subjectName','sel', 'Kiểu tên môn', 'showSubject',
-      [['short','Viết tắt — VD: Tiếng Việt'],['full','Đầy đủ — VD: Tiếng Việt']]],
-    ['showTeacher','chk', 'In tên giáo viên'],
-    ['teacherName','sel', 'Kiểu tên giáo viên', 'showTeacher',
-      [['short','Viết tắt — VD: N. Thị Lan'],['full','Đầy đủ — VD: Nguyễn Thị Lan']]],
-    ['showRoom',  'chk',  'In phòng chức năng'],
-    ['showMerge', 'chk',  'In nhãn dồn lớp'],
-    ['emptyDash', 'chk',  'Ô trống in dấu “—” (bỏ chọn để trắng)']
+  ['Dòng phụ — bản theo lớp', true, [
+    ['showHomeroom', 'chk','In giáo viên chủ nhiệm'],
+    ['tplHomeroom',  'tpl','Chữ in ra', 'showHomeroom'],
+    ['showSize',     'chk','In sĩ số'],
+    ['tplSize',      'tpl','Chữ in ra', 'showSize'],
+    ['showClassNote','chk','In ghi chú của lớp'],
+    ['tplClassNote', 'tpl','Chữ in ra', 'showClassNote']
   ]],
-  ['Trang giấy', [
-    ['orientation','sel', 'Hướng giấy', null,
+  ['Dòng phụ — bản theo giáo viên', false, [
+    ['showTeaName', 'chk','In họ tên giáo viên'],
+    ['tplTeaName',  'tpl','Chữ in ra', 'showTeaName'],
+    ['showTeaKind', 'chk','In nhóm giáo viên'],
+    ['tplTeaKind',  'tpl','Chữ in ra', 'showTeaKind'],
+    ['showTeaRole', 'chk','In nhiệm vụ'],
+    ['tplTeaRole',  'tpl','Chữ in ra', 'showTeaRole'],
+    ['showTeaOff',  'chk','In buổi / ngày được nghỉ'],
+    ['tplTeaOff',   'tpl','Chữ in ra', 'showTeaOff'],
+    ['showTeaNote', 'chk','In ghi chú của giáo viên'],
+    ['tplTeaNote',  'tpl','Chữ in ra', 'showTeaNote'],
+    ['showTeaTotal','chk','In tổng số tiết/tuần'],
+    ['tplTeaTotal', 'tpl','Chữ in ra', 'showTeaTotal'],
+    ['showTeaAft',  'chk','In số buổi chiều đứng lớp'],
+    ['tplTeaAft',   'tpl','Chữ in ra', 'showTeaAft']
+  ]],
+  ['Dòng phụ — bản theo phòng', false, [
+    ['showRoomCap','chk','In sức chứa của phòng'],
+    ['tplRoomCap', 'tpl','Chữ in ra', 'showRoomCap']
+  ]],
+  ['Nội dung ô tiết', true, [
+    ['showSubject','chk','In tên môn học'],
+    ['subjectName','sel','Kiểu tên môn', 'showSubject',
+      [['short','Viết tắt'],['full','Tên đầy đủ']]],
+    ['showTeacher','chk','In tên giáo viên'],
+    ['teacherName','sel','Kiểu tên giáo viên', 'showTeacher',
+      [['short','Viết tắt — N. Thị Lan'],['full','Đầy đủ — Nguyễn Thị Lan']]],
+    ['showRoom',  'chk','In phòng chức năng'],
+    ['showMerge', 'chk','In nhãn dồn lớp'],
+    ['showEmpty', 'chk','In dấu ở ô trống'],
+    ['textEmpty', 'text','Dấu ở ô trống', 'showEmpty']
+  ]],
+  ['Bảng & trang giấy', true, [
+    ['orientation','sel','Hướng giấy', null,
       [['landscape','A4 nằm ngang'],['portrait','A4 dựng đứng']]],
-    ['fontScale', 'num',  'Cỡ chữ (%)', null, {min:70, max:130, step:5}],
-    ['showClock', 'chk',  'In giờ vào – ra của mỗi tiết'],
-    ['mono',      'chk',  'Bản không màu (in trắng đen)'],
-    ['showLegend','chk',  'In chú giải môn học ở cuối bảng']
+    ['fontScale', 'num','Cỡ chữ (%)', null, {min:70,max:130,step:5}],
+    ['rowHeight', 'num','Chiều cao tối thiểu mỗi dòng (mm, 0 = tự động)', null, {min:0,max:30,step:1}],
+    ['textPeriodCol','text','Tên cột đầu tiên'],
+    ['textMorning',  'text','Chữ chỉ buổi sáng'],
+    ['textAfternoon','text','Chữ chỉ buổi chiều'],
+    ['tplRowHead',   'text','Mẫu chữ đầu mỗi dòng — dùng {buoi} và {tiet}'],
+    ['dayStyle',  'sel','Kiểu tên thứ', null,
+      [['full','Thứ Hai'],['upper','THỨ HAI'],['short','T2']]],
+    ['showClock', 'chk','In giờ vào – ra của mỗi tiết'],
+    ['mono',      'chk','Bản không màu (in trắng đen)'],
+    ['showLegend','chk','In chú giải môn học ở cuối bảng']
   ]],
-  ['Cuối trang', [
-    ['note',      'area', 'Ghi chú in dưới bảng'],
+  ['Cuối trang & chữ ký', true, [
+    ['showNote',  'chk','In ghi chú dưới bảng'],
+    ['textNote',  'area','Nội dung ghi chú', 'showNote'],
+    ['noteAlign', 'sel','Vị trí ghi chú', 'showNote', AL],
     ['showPlaceDate','chk','In dòng nơi chốn – ngày tháng'],
-    ['placeDate', 'text', 'Nội dung dòng ngày tháng', 'showPlaceDate'],
-    ['showSign',  'chk',  'In các ô ký tên'],
-    ['sign0',     'text', 'Ô ký 1 (để trống là bỏ)', 'showSign'],
-    ['sign1',     'text', 'Ô ký 2 (để trống là bỏ)', 'showSign'],
-    ['sign2',     'text', 'Ô ký 3 (để trống là bỏ)', 'showSign']
+    ['textPlaceDate','text','Nội dung dòng ngày tháng', 'showPlaceDate'],
+    ['placeAlign','sel','Vị trí dòng ngày tháng', 'showPlaceDate', AL],
+    ['showSign',  'chk','In khối chữ ký'],
+    ['signLeft',  'text','Chữ ký cột TRÁI (để trống là bỏ)',  'showSign'],
+    ['signCenter','text','Chữ ký cột GIỮA (để trống là bỏ)',  'showSign'],
+    ['signRight', 'text','Chữ ký cột PHẢI (để trống là bỏ)',  'showSign'],
+    ['showSignHint','chk','In dòng nhắc dưới mỗi chữ ký'],
+    ['textSignHint','text','Nội dung dòng nhắc', 'showSignHint'],
+    ['signGap',   'num','Khoảng trống chừa để ký (mm)', 'showSign', {min:0,max:60,step:2}]
   ]]
 ];
-function exGet(E,k){ return /^sign\d$/.test(k) ? (E.signs||[])[+k.slice(4)]||'' : E[k]; }
-function exSet(E,k,v){ if(/^sign\d$/.test(k)){ E.signs=E.signs||['','','']; E.signs[+k.slice(4)]=v; } else E[k]=v; }
+function exGet(E,k){ return E[k]; }
+function exSet(E,k,v){ E[k]=v; }
 
 function exRenderForm(){
   const E=exCfg();
-  $('#exForm').innerHTML = EX_FIELDS.map(([grp,items])=>
-    `<div class="ex-grp">${esc(grp)}</div>` + items.map(([k,type,label,dep,extra])=>{
+  const open=$('#exForm').dataset.open;                    // giữ nguyên nhóm đang mở khi vẽ lại
+  const openSet=new Set(open!==undefined && open!=='' ? open.split('|') : null);
+  $('#exForm').innerHTML = EX_FIELDS.map(([grp,def,items],gi)=>{
+    const isOpen = open===undefined ? def : openSet.has(String(gi));
+    const body = items.map(([k,type,label,dep,extra])=>{
       const off = dep && !E[dep];
       const v = exGet(E,k);
       if(type==='chk')
@@ -1531,9 +1716,19 @@ function exRenderForm(){
         ctl=`<textarea data-k="${k}" rows="2" placeholder="Để trống nếu không in"${dis}>${esc(v)}</textarea>`;
       else
         ctl=`<input type="text" data-k="${k}" value="${esc(v)}"${dis}>`;
-      return `<label class="ex-field${off?' off':''}"><span>${esc(label)}</span>${ctl}</label>`;
-    }).join('')).join('');
+      const hint = type==='tpl' ? '<i class="ex-hint">{gt} = giá trị thật</i>' : '';
+      return `<label class="ex-field${off?' off':''}${dep?' ex-sub':''}"><span>${esc(label)}${hint}</span>${ctl}</label>`;
+    }).join('');
+    return `<details class="ex-sec" data-gi="${gi}"${isOpen?' open':''}>
+      <summary>${esc(grp)}</summary><div class="ex-sec-body">${body}</div></details>`;
+  }).join('');
 }
+/* Ghi nhớ nhóm nào đang mở để lần vẽ lại không bị đóng sập hết */
+function exRememberOpen(){
+  $('#exForm').dataset.open =
+    [...$('#exForm').querySelectorAll('.ex-sec')].map((d,i)=>d.open?String(i):'').filter(Boolean).join('|');
+}
+$('#exForm').addEventListener('toggle', exRememberOpen, true);
 function exDraw(){
   const E=exCfg(), P=paperSize(E);
   const wrap=$('#exPaper'), fr=$('#exPrev');
@@ -1565,10 +1760,13 @@ $('#exmodal').addEventListener('click',e=>{ if(e.target.id==='exmodal') $('#exCl
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('#exmodal').hidden) $('#exClose').click(); });
 $('#exForm').addEventListener('input',e=>{
   const el=e.target, k=el.dataset.k; if(!k) return;
-  const E=exCfg();
-  exSet(E, k, el.type==='checkbox' ? el.checked
-           : el.type==='number'    ? Math.max(70,Math.min(130,+el.value||100))
-           : el.value);
+  let v;
+  if(el.type==='checkbox') v=el.checked;
+  else if(el.type==='number'){                       // kẹp theo min/max của chính ô đó
+    const lo=+el.min||0, hi=el.max===''?1e9:+el.max;
+    v=Math.max(lo, Math.min(hi, +el.value||0));
+  } else v=el.value;
+  exSet(exCfg(), k, v);
   if(el.type==='checkbox' || el.tagName==='SELECT') exRenderForm();   // bật/tắt ô phụ thuộc
   exDraw();
 });

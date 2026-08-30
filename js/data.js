@@ -18,25 +18,59 @@ const WHO_NAME  = {homeroom:'GVCN', specialist:'GV bộ môn', session2:'GV bu�
 ------------------------------------------------------------ */
 function defaultExportCfg(){
   return {
-    /* nội dung trong mỗi ô tiết */
-    showTeacher:true,  teacherName:'short',   // 'short' = N. Thị Lan | 'full' = Nguyễn Thị Lan
+    /* --- nội dung trong mỗi ô tiết --- */
     showSubject:true,  subjectName:'short',   // 'short' = Tiếng Việt | 'full' = tên đầy đủ
+    showTeacher:true,  teacherName:'short',   // 'short' = N. Thị Lan | 'full' = Nguyễn Thị Lan
     showRoom:true,     showMerge:true,
-    emptyDash:true,                            // ô trống in dấu "—" hay để trắng
+    showEmpty:true,    textEmpty:'—',         // chữ in ở ô trống
 
-    /* phần đầu mỗi trang */
-    showDept:false,    deptName:'PHÒNG GD&ĐT ……………',
-    showSchool:true,   showMeta:true,  showSubMeta:true,
+    /* --- đầu mỗi trang --- */
+    showDept:false,    tplDept:'PHÒNG GD&ĐT ……………',
+    showSchool:true,   tplSchool:'{gt}',
+    showTitle:true,
+    tplTitleClass:'THỜI KHOÁ BIỂU LỚP {gt}',
+    tplTitleTeacher:'THỜI KHOÁ BIỂU GIÁO VIÊN',
+    tplTitleRoom:'LỊCH SỬ DỤNG PHÒNG — {gt}',
+    tplTitleMaster:'BẢNG TỔNG HỢP THỜI KHOÁ BIỂU TOÀN TRƯỜNG',
+    showYear:true,     tplYear:'Năm học {gt}',
+    showSemester:true, tplSemester:'{gt}',
+    showFrom:true,     tplFrom:'Áp dụng từ {gt}',
+    sepMeta:' • ',                             // dấu ngăn giữa các mục cùng dòng
 
-    /* bảng */
-    showClock:true,    mono:false,     fontScale:100,   // 85–120 %
-    orientation:'landscape',                            // 'landscape' | 'portrait'
+    /* --- dòng phụ dưới tiêu đề --- */
+    showHomeroom:true,  tplHomeroom:'Giáo viên chủ nhiệm: {gt}',
+    showSize:true,      tplSize:'Sĩ số: {gt}',
+    showClassNote:true, tplClassNote:'{gt}',
+    showTeaName:true,   tplTeaName:'{gt}',
+    showTeaKind:true,   tplTeaKind:'{gt}',
+    showTeaRole:true,   tplTeaRole:'{gt}',
+    showTeaOff:true,    tplTeaOff:'{gt}',
+    showTeaNote:true,   tplTeaNote:'{gt}',
+    showRoomCap:true,   tplRoomCap:'Sức chứa đồng thời: {gt} lớp',
+    showTeaTotal:true,  tplTeaTotal:'Tổng số tiết/tuần: {gt}',
+    showTeaAft:true,    tplTeaAft:'Số buổi chiều đứng lớp: {gt}',
 
-    /* phần cuối mỗi trang */
+    /* --- bảng --- */
+    textPeriodCol:'Tiết', textMorning:'Sáng', textAfternoon:'Chiều',
+    tplRowHead:'{buoi} {tiet}',
+    dayStyle:'full',                           // 'full' Thứ Hai | 'short' T2 | 'upper' THỨ HAI
+    showClock:true,  mono:false,
+    fontScale:100,                             // 70–130 %
+    orientation:'landscape',                   // 'landscape' | 'portrait'
+    rowHeight:0,                               // chiều cao tối thiểu mỗi dòng, mm (0 = tự động)
     showLegend:true,
-    showPlaceDate:true, placeDate:'…………, ngày …… tháng …… năm ………',
-    showSign:true,      signs:['GIÁO VIÊN CHỦ NHIỆM','TỔ TRƯỞNG CHUYÊN MÔN','HIỆU TRƯỞNG'],
-    note:''                                             // ghi chú tự do in dưới bảng
+
+    /* --- cuối mỗi trang --- */
+    showNote:false,     textNote:'',            noteAlign:'left',
+    showPlaceDate:true, textPlaceDate:'…………, ngày …… tháng …… năm ………', placeAlign:'right',
+    /* Ba cột ký cố định Trái – Giữa – Phải. Cột để trống vẫn giữ chỗ,
+       nên xoá bớt chữ ký thì các chữ ký còn lại KHÔNG bị dồn vào giữa. */
+    showSign:true,
+    signLeft:'GIÁO VIÊN CHỦ NHIỆM',
+    signCenter:'TỔ TRƯỞNG CHUYÊN MÔN',
+    signRight:'HIỆU TRƯỞNG',
+    showSignHint:false, textSignHint:'(Ký, ghi rõ họ tên)',
+    signGap:22                                 // khoảng trống chừa để ký, mm
   };
 }
 

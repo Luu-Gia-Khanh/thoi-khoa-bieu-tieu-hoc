@@ -162,9 +162,14 @@ table.data.mini td,table.data.mini th{padding:5px 8px; font-size:12px}
 .tt-block{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:20px; box-shadow:var(--shadow); page-break-after:always}
 .tt-block:last-child{page-break-after:auto}
 .tt-head{text-align:center; margin-bottom:14px}
+.tt-head .dept{font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--ink-2)}
 .tt-head .sch{font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--ink-2)}
 .tt-head .ttl{font-size:20px; font-weight:800; margin:4px 0}
 .tt-head .meta{font-size:12.5px; color:var(--ink-2)}
+.sub-meta{text-align:center; font-size:12.5px; color:var(--ink-2); margin:-8px 0 12px}
+.sub-meta .sep,.tt-head .meta .sep{white-space:pre; color:var(--ink-3)}
+.tt-note{margin-top:12px; font-size:12.5px; font-style:italic; white-space:pre-wrap}
+.tt-place{margin-top:12px; font-size:12.5px; font-style:italic}
 
 table.tt{width:100%; border-collapse:collapse; table-layout:fixed}
 table.tt th,table.tt td{border:1px solid var(--line-2); padding:5px 6px; text-align:center; font-size:12px; height:52px; vertical-align:middle}
@@ -714,19 +719,31 @@ table.data.sticky2 td.g-id:nth-child(2){left:64px; min-width:190px}
 /* ---------- Hộp thoại tuỳ chỉnh bản in ---------- */
 .ex-box{width:min(1180px,100%); height:min(88vh,860px)}
 .ex-body{flex:1; display:flex; min-height:0; overflow:hidden}
-.ex-form{width:352px; flex:0 0 352px; overflow:auto; padding:6px 18px 20px; border-right:1px solid var(--line)}
-.ex-grp{font-size:11px; font-weight:800; letter-spacing:.9px; color:var(--ink-3);
-  text-transform:uppercase; padding:18px 2px 8px}
-.ex-row{display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:9px;
-  cursor:pointer; font-size:13.5px; transition:.12s}
+.ex-form{width:378px; flex:0 0 378px; overflow:auto; padding:10px 16px 24px; border-right:1px solid var(--line)}
+.ex-sec{border:1px solid var(--line); border-radius:11px; margin-bottom:8px; background:#fff}
+.ex-sec[open]{box-shadow:var(--sh-1)}
+.ex-sec>summary{cursor:pointer; list-style:none; padding:11px 14px; font-size:12px;
+  font-weight:800; letter-spacing:.6px; text-transform:uppercase; color:var(--ink-2);
+  border-radius:11px; display:flex; align-items:center; gap:8px}
+.ex-sec>summary::-webkit-details-marker{display:none}
+.ex-sec>summary::before{content:'▸'; font-size:11px; color:var(--ink-3); transition:.15s}
+.ex-sec[open]>summary::before{transform:rotate(90deg)}
+.ex-sec>summary:hover{background:#f5f8fd; color:var(--brand)}
+.ex-sec-body{padding:2px 10px 12px; border-top:1px solid var(--line)}
+.ex-row{display:flex; align-items:center; gap:10px; padding:8px; border-radius:9px;
+  cursor:pointer; font-size:13.5px; transition:.12s; margin-top:4px}
 .ex-row:hover{background:#f3f7ff}
 .ex-row input[type=checkbox]{width:17px; height:17px; flex:0 0 auto; cursor:pointer; accent-color:var(--brand)}
-.ex-field{display:block; padding:5px 8px 9px}
-.ex-field>span{display:block; font-size:12px; color:var(--ink-2); margin-bottom:4px}
+.ex-field{display:block; padding:2px 8px 8px}
+.ex-field>span{display:flex; align-items:baseline; gap:6px; font-size:12px;
+  color:var(--ink-2); margin-bottom:4px}
+.ex-hint{font-size:10.5px; font-style:normal; color:var(--ink-3); background:#f1f4f9;
+  padding:1px 5px; border-radius:4px; white-space:nowrap}
 .ex-field input,.ex-field select,.ex-field textarea{width:100%; font-family:inherit}
 .ex-field textarea{resize:vertical; padding:7px 10px; border:1px solid var(--line-2);
   border-radius:9px; font-size:13.5px; color:var(--ink)}
-.ex-field.off{opacity:.45}
+.ex-field.ex-sub{margin-left:10px; padding-left:12px; border-left:2px solid var(--line)}
+.ex-field.off{opacity:.4}
 
 .ex-prev{flex:1; min-width:0; display:flex; flex-direction:column; background:#eef1f7}
 .ex-prev-bar{display:flex; align-items:center; gap:10px; padding:10px 18px; font-size:12px;

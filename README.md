@@ -230,12 +230,33 @@ Hộp thoại chia hai nửa: **bên trái là tuỳ chọn, bên phải là b�
 Sửa bên trái thấy đổi ngay bên phải. Bản xem trước, bản PDF và bản Word đều dựng từ cùng một
 nguồn nên **xem sao thì in ra đúng vậy**.
 
-| Nhóm | Chỉnh được gì |
+**Mỗi mẩu chữ là một mục riêng** — có công tắc ẩn/hiện riêng và ô sửa chữ riêng, không gộp
+chung. Trong ô sửa chữ, **`{gt}` là chỗ phần mềm điền giá trị thật**: đặt
+`GVCN phụ trách: {gt}` thì in ra `GVCN phụ trách: Nguyễn Thị Lan`.
+
+| Nhóm | Từng mục chỉnh riêng được |
 |---|---|
-| **Đầu trang** | Tên cơ quan chủ quản (VD *PHÒNG GD&ĐT …*) • tên trường • dòng năm học – học kỳ – ngày áp dụng • dòng phụ (GVCN, sĩ số, ghi chú lớp) |
-| **Nội dung ô tiết** | Bật/tắt tên môn, tên giáo viên, phòng chức năng, nhãn dồn lớp • chọn tên **viết tắt** hay **đầy đủ** • ô trống in dấu «—» hay để trắng |
-| **Trang giấy** | A4 **nằm ngang** hoặc **dựng đứng** • cỡ chữ 70–130 % • giờ vào–ra mỗi tiết • bản không màu • chú giải môn |
-| **Cuối trang** | Ghi chú tự do • dòng *«…, ngày … tháng … năm …»* • **sửa tên từng ô ký** (để trống là bỏ ô đó, nên in được 1, 2 hay 3 ô tuỳ trường) |
+| **Đầu trang** | Cơ quan chủ quản • tên trường • **4 mẫu tiêu đề** (bản theo lớp / giáo viên / phòng / tổng hợp) • năm học • học kỳ • ngày áp dụng • dấu ngăn giữa các mục |
+| **Dòng phụ — theo lớp** | Giáo viên chủ nhiệm • sĩ số • ghi chú của lớp |
+| **Dòng phụ — theo giáo viên** | Họ tên • nhóm giáo viên • nhiệm vụ • buổi nghỉ • ghi chú • tổng tiết/tuần • số buổi chiều |
+| **Dòng phụ — theo phòng** | Sức chứa của phòng |
+| **Nội dung ô tiết** | Tên môn • tên giáo viên • phòng • nhãn dồn lớp — mỗi thứ một công tắc, tên chọn **viết tắt** hay **đầy đủ** • dấu ở ô trống |
+| **Bảng & trang giấy** | A4 **ngang / dọc** • cỡ chữ 70–130 % • **chiều cao tối thiểu mỗi dòng (mm)** • tên cột đầu • chữ chỉ buổi sáng / chiều • mẫu chữ đầu dòng `{buoi} {tiet}` • kiểu tên thứ (*Thứ Hai / THỨ HAI / T2*) • giờ vào–ra • bản không màu • chú giải môn |
+| **Cuối trang & chữ ký** | Ghi chú + **vị trí** • dòng ngày tháng + **vị trí** • **3 cột ký Trái – Giữa – Phải** • dòng nhắc *(Ký, ghi rõ họ tên)* • khoảng trống chừa để ký (mm) |
+
+### Vị trí chữ ký
+
+Khối chữ ký luôn là **ba cột cố định: Trái – Giữa – Phải**. Cột để trống vẫn giữ chỗ, nên
+xoá bớt chữ ký thì các chữ ký còn lại **đứng nguyên vị trí, không bị dồn vào giữa**.
+Muốn một chữ ký nằm bên phải thì điền vào ô *Chữ ký cột PHẢI* và để trống hai ô kia.
+
+### Bản Word đã căn chỉnh sẵn
+
+Bản `.docx` xuất ra dùng ngay, không phải mở Word chỉnh lại:
+ô bảng có lề trong nên chữ không dính khung • dòng tiêu đề tự lặp lại khi bảng tràn sang
+trang sau • bảng căn giữa trang • khoảng cách giữa các khối chữ theo một nhịp thống nhất •
+khoảng trống ký đúng số mm đã đặt • luôn có đoạn ngăn giữa bảng thời khoá biểu và bảng chữ ký
+(nếu không Word sẽ nhập hai bảng làm một).
 
 - **Lưu cấu hình** ghi vào dữ liệu nên đi theo cả bản sao lưu và tệp `.json` xuất ra — mở máy khác vẫn giữ đúng định dạng.
 - **Huỷ** trả mọi tuỳ chọn về nguyên trạng lúc mở hộp thoại; **Về mặc định** đưa lại thiết lập gốc.
