@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phần mềm Xếp Thời khoá biểu Tiểu học</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header no-print">
+  <div class="brand">
+    <div class="logo">TKB</div>
+    <div>
+      <h1 id="hdSchool">TRƯỜNG TIỂU HỌC</h1>
+      <p id="hdYear">Năm học —</p>
+    </div>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn btn-ghost" id="btnImport">Nhập dữ liệu</button>
+    <button class="btn btn-ghost" id="btnExport">Xuất dữ liệu</button>
+    <button class="btn btn-ghost" id="btnReset">Khôi phục mẫu</button>
+    <button class="btn btn-primary" id="btnRunTop">Xếp thời khoá biểu</button>
+    <input type="file" id="fileImport" accept=".json" hidden>
+  </div>
+</header>
+
+<nav class="tabs no-print" id="tabs">
+  <button class="tab active" data-tab="plan">Kế hoạch xếp TKB</button>
+  <button class="tab" data-tab="config">Cấu hình</button>
+  <button class="tab" data-tab="subjects">Môn học &amp; Phân phối</button>
+  <button class="tab" data-tab="classes">Lớp học</button>
+  <button class="tab" data-tab="teachers">Giáo viên</button>
+  <button class="tab" data-tab="rooms">Phòng học</button>
+  <button class="tab" data-tab="rules">Ràng buộc &amp; Ngoại lệ</button>
+  <button class="tab" data-tab="run">Chạy xếp lịch</button>
+  <button class="tab" data-tab="view">Xem &amp; In TKB</button>
+  <button class="tab" data-tab="check">Kiểm tra xung đột</button>
+  <button class="tab" data-tab="backup">Sao lưu &amp; Lịch sử</button>
+</nav>
+
+<main>
+
+<!-- ============ TAB: KẾ HOẠCH ============ -->
+<section class="panel active" id="tab-plan">
+  <div class="doc">
+    <h2>KẾ HOẠCH XẾP THỜI KHOÁ BIỂU TRƯỜNG TIỂU HỌC</h2>
+    <p class="lead">Quy trình 7 bước, 3 tầng ràng buộc và bộ 24 tình huống ngoại lệ — đúc kết từ thực tiễn quản lý chuyên môn.</p>
+
+    <h3>I. Căn cứ pháp lý &amp; chuyên môn</h3>
+    <ul>
+      <li>Thông tư 32/2018/TT-BGDĐT — Chương trình GDPT 2018 cấp Tiểu học (kế hoạch giáo dục, số tiết/môn/tuần).</li>
+      <li>Thông tư 28/2020/TT-BGDĐT — Điều lệ trường tiểu học (tổ chức dạy học 2 buổi/ngày, không quá 7 tiết/ngày).</li>
+      <li>Thông tư 28/2009 &amp; 15/2017 — Định mức tiết dạy: GVCN 23 tiết/tuần, GV bộ môn 23 tiết/tuần, trừ giờ kiêm nhiệm.</li>
+      <li>Hướng dẫn nhiệm vụ năm học của Sở/Phòng GD&amp;ĐT; Kế hoạch giáo dục nhà trường đã được phê duyệt.</li>
+    </ul>
+
+    <h3>I-bis. Ba nhóm giáo viên &amp; khung tuần</h3>
+    <p>Trường tổ chức <b>2 buổi/ngày, học từ thứ Hai đến thứ Sáu, nghỉ chiều thứ Sáu</b>
+       → khung tuần còn <b>32 ô/lớp</b> (5 buổi sáng × 4 tiết + 4 buổi chiều × 3 tiết).
+       Phân phối chương trình được cân về <b>30 tiết/tuần</b>, dôi 2 ô làm dư địa.
+       Tiết Sinh hoạt lớp vì thế chuyển về <b>tiết 4 sáng thứ Sáu</b>.</p>
+    <table class="doc-table">
+      <tr><th>Nhóm</th><th>Phụ trách</th><th>Buổi đứng lớp</th><th>Chế độ nghỉ</th></tr>
+      <tr><td>GVCN</td><td>Tiếng Việt, Toán, Đạo đức, TN&amp;XH, Khoa học, Sử &amp; Địa, Công nghệ, Chào cờ, HĐTN, Sinh hoạt lớp</td><td>Cả ngày, nhưng <b>tối đa 2 buổi chiều/tuần</b></td><td><b>Nghỉ 1 buổi</b></td></tr>
+      <tr><td>GV bộ môn</td><td>Tiếng Anh, Tin học, Thể chất, Âm nhạc, Mĩ thuật</td><td>Cả ngày</td><td><b>Nghỉ 1 ngày</b> (có thể đổi sang 1 buổi)</td></tr>
+      <tr><td>GV buổi 2</td><td>Phụ đạo Tiếng Việt, Phụ đạo Toán, Đọc sách thư viện</td><td><b>Chỉ buổi chiều</b></td><td><b>Nghỉ 1 ngày</b> (có thể đổi sang 1 buổi)</td></tr>
+    </table>
+
+    <h3>II. Nguyên tắc bất di bất dịch</h3>
+    <ol>
+      <li><b>Quyền lợi học sinh trước quyền lợi giáo viên.</b> Môn khó (Toán, Tiếng Việt) xếp vào khung giờ vàng: tiết 1–3 buổi sáng.</li>
+      <li><b>Đủ và đúng số tiết</b> theo phân phối chương trình — không cắt xén, không dạy dồn.</li>
+      <li><b>Tài nguyên khan hiếm xếp trước.</b> Phòng chức năng và giáo viên bộ môn dùng chung toàn trường phải xếp trước GVCN.</li>
+      <li><b>Không có tiết trống giữa buổi</b> đối với lớp; tiết trống (nếu có) dồn về cuối buổi chiều.</li>
+      <li><b>Ổn định cả học kỳ.</b> Mọi thay đổi phải có văn bản và thông báo trước tối thiểu 3 ngày.</li>
+    </ol>
+
+    <h3>III. Quy trình 7 bước</h3>
+    <div class="steps">
+      <div class="step"><span>1</span><div><b>Thu thập dữ liệu đầu vào</b><p>Số lớp/khối, sĩ số, danh sách GV và môn được phân công, phòng chức năng, lịch bận cố định của GV, các lớp có nhu cầu đặc thù.</p></div></div>
+      <div class="step"><span>2</span><div><b>Cân đối định mức lao động</b><p>Tính tổng cầu tiết từng môn toàn trường → chia cho số GV bộ môn → kiểm tra quá tải/thiếu tải trước khi xếp. Nếu vượt định mức phải bổ sung GV hoặc điều chỉnh phân công.</p></div></div>
+      <div class="step"><span>3</span><div><b>Khoá các tiết cố định</b><p>Chào cờ (tiết 1 sáng thứ Hai), Sinh hoạt lớp (tiết cuối thứ Sáu), tiết ngoại khoá/chuyên đề định kỳ, lịch họp hội đồng.</p></div></div>
+      <div class="step"><span>4</span><div><b>Xếp tài nguyên khan hiếm</b><p>Thứ tự: Tin học (1 phòng máy) → Âm nhạc/Mĩ thuật (phòng riêng) → GD Thể chất (sân/nhà đa năng) → Tiếng Anh → Thư viện.</p></div></div>
+      <div class="step"><span>5</span><div><b>Lấp môn của GVCN và GV buổi 2</b><p>Rải Tiếng Việt/Toán vào khung giờ vàng buổi sáng; phụ đạo và thư viện dồn về buổi chiều do GV buổi 2 đảm nhiệm, giữ GVCN trong giới hạn 1–2 buổi chiều.</p></div></div>
+      <div class="step"><span>6</span><div><b>Tối ưu mềm</b><p>Hoán đổi cục bộ để giảm: tiết trống của GV, chuỗi tiết liên tục quá 4, lệch tải giữa các ngày, khoảng cách di chuyển phòng.</p></div></div>
+      <div class="step"><span>7</span><div><b>Duyệt – Công bố – Điều chỉnh</b><p>Tổ trưởng chuyên môn rà soát → Hiệu trưởng ký duyệt → niêm yết + gửi phụ huynh → mở cửa sổ phản hồi 3 ngày → ban hành bản chính thức.</p></div></div>
+    </div>
+
+    <h3>IV. Ba tầng ràng buộc</h3>
+    <h4>Tầng 1 — Ràng buộc cứng (vi phạm = TKB không hợp lệ)</h4>
+    <table class="doc-table">
+      <tr><th>Mã</th><th>Nội dung</th></tr>
+      <tr><td>H1</td><td>Một lớp tại một tiết chỉ học đúng một môn.</td></tr>
+      <tr><td>H2</td><td>Một giáo viên tại một tiết chỉ đứng lớp tại một lớp.</td></tr>
+      <tr><td>H3</td><td>Một phòng chức năng không vượt quá sức chứa đồng thời (số phòng cùng loại).</td></tr>
+      <tr><td>H4</td><td>Không xếp tiết vào ô giáo viên đã đăng ký bận (họp, học nâng chuẩn, dạy liên trường).</td></tr>
+      <tr><td>H5</td><td>Đủ 100% số tiết/tuần theo phân phối chương trình của từng khối.</td></tr>
+      <tr><td>H6</td><td>Không quá 7 tiết/ngày với lớp; không quá số tiết/ngày và /tuần theo định mức với GV.</td></tr>
+      <tr><td>H7</td><td>Các tiết ghim (Chào cờ, Sinh hoạt lớp, tiết đặc thù) đứng đúng vị trí đã khoá.</td></tr>
+      <tr><td>H8</td><td>Không xếp tiết vào ô lớp đã bị khoá nghỉ (ví dụ lớp 1 nghỉ chiều thứ Sáu).</td></tr>
+      <tr><td>H9</td><td>Giáo viên chỉ được đứng lớp trong buổi được phép — GV buổi 2 chỉ dạy buổi chiều.</td></tr>
+      <tr><td>H10</td><td>Giáo viên chủ nhiệm không vượt quá số buổi chiều cho phép (mặc định 2 buổi/tuần).</td></tr>
+      <tr><td>H13</td><td>Tiết 1 mỗi buổi sáng của mỗi lớp dành riêng cho giáo viên chủ nhiệm đón lớp.</td></tr>
+      <tr><td>H14</td><td>Mỗi lớp mỗi buổi sáng chỉ nhường cho giáo viên bộ môn số ô = (số tiết sáng − mức tối thiểu của GVCN).</td></tr>
+      <tr><td>H11</td><td>Giáo viên chỉ dạy đúng những khối được phân công (cột Giới hạn khối).</td></tr>
+      <tr><td>H12</td><td>Số tiết/tuần của một môn không vượt (số ngày học × giới hạn tiết mỗi ngày của môn đó).</td></tr>
+    </table>
+
+    <h4>Tầng 2 — Ràng buộc mềm (chấm điểm, càng thấp càng tốt)</h4>
+    <table class="doc-table">
+      <tr><th>Mã</th><th>Nội dung</th><th>Vì sao</th></tr>
+      <tr><td>S1</td><td>Toán, Tiếng Việt ưu tiên tiết 1–3 buổi sáng.</td><td>Đỉnh chú ý của học sinh tiểu học rơi vào 7h30–9h30.</td></tr>
+      <tr><td>S2</td><td>Rải đều môn trong tuần, không dồn 2–3 tiết cùng môn/ngày.</td><td>Bảo đảm nhịp lặp lại kiến thức.</td></tr>
+      <tr><td>S3</td><td>Cho phép tiết đôi liền kề với Tiếng Việt lớp 1–2 và tiết phụ đạo.</td><td>Trẻ mới học đọc – viết cần mạch liền, giảm chuyển trạng thái.</td></tr>
+      <tr><td>S4</td><td>Không xếp GD Thể chất tiết 1 buổi chiều và tiết cuối buổi sáng.</td><td>Ngay sau ăn/ngủ trưa và giờ nắng gắt — nguy cơ sức khoẻ.</td></tr>
+      <tr><td>S5</td><td>Giảm tối đa tiết trống xen kẽ của giáo viên bộ môn.</td><td>Tránh GV chờ vô ích, tăng thời gian soạn giảng.</td></tr>
+      <tr><td>S6</td><td>Không để GV dạy quá 4 tiết liên tục.</td><td>Bảo vệ chất lượng tiết dạy và sức khoẻ GV.</td></tr>
+      <tr><td>S7</td><td>Cân bằng số tiết/ngày của mỗi GV (chênh lệch ≤ 2 tiết).</td><td>Tránh ngày 7 tiết – ngày 1 tiết.</td></tr>
+      <tr><td>S8</td><td>Tiết trống của lớp dồn về cuối buổi chiều.</td><td>Để phụ huynh đón sớm ổn định, không vỡ buổi.</td></tr>
+      <tr><td>S9</td><td>Môn năng khiếu (Âm nhạc, Mĩ thuật) nên đặt sau tiết văn hoá nặng.</td><td>Điều tiết trạng thái tâm lý trong buổi.</td></tr>
+      <tr><td>S10</td><td>Hạn chế cùng một GV bộ môn dạy 2 buổi tách rời trong một ngày.</td><td>Giảm số buổi di chuyển, đặc biệt GV liên trường.</td></tr>
+    </table>
+
+    <h4>Tầng 3 — 24 tình huống ngoại lệ đã được xử lý</h4>
+    <div class="cases">
+      <div class="case"><b>N1. GV nữ nuôi con dưới 12 tháng</b><p>Khoá tiết 1 buổi sáng và tiết cuối buổi chiều; giảm 3 tiết/tuần theo quy định.</p></div>
+      <div class="case"><b>N2. GV dạy liên trường</b><p>Khoá trọn buổi tại trường bạn; gom toàn bộ tiết vào 2–3 buổi cố định.</p></div>
+      <div class="case"><b>N3. GV đi học nâng chuẩn</b><p>Khoá thứ Bảy/Chủ nhật hoặc buổi học cố định trong tuần; bù tiết vào buổi còn lại.</p></div>
+      <div class="case"><b>N4. GV nghỉ thai sản / ốm dài ngày</b><p>Chuyển sang GV dạy thay, giữ nguyên khung tiết để không xáo trộn lớp.</p></div>
+      <div class="case"><b>N5. Thiếu phòng Tin học</b><p>Đặt sức chứa đồng thời = 1; hệ thống tự rải 6 lớp ra 6 khung tiết khác nhau.</p></div>
+      <div class="case"><b>N6. Sân trường dùng chung</b><p>Khai báo sức chứa 2 (sân + nhà đa năng) để 2 lớp học Thể chất song song.</p></div>
+      <div class="case"><b>N7. Lớp 1 nghỉ một buổi</b><p>Khoá ô lớp; chương trình lớp 1 tự co về số tiết còn lại.</p></div>
+      <div class="case"><b>N8. Lớp bán trú vs không bán trú</b><p>Cấu hình số tiết buổi chiều khác nhau theo khối.</p></div>
+      <div class="case"><b>N9. Tiết chuyên đề / thao giảng</b><p>Ghim tiết cố định cho lớp được chọn trước khi chạy thuật toán.</p></div>
+      <div class="case"><b>N10. Chào cờ đầu tuần</b><p>Ghim toàn trường tiết 1 sáng thứ Hai, không GV bộ môn nào bị chiếm chỗ.</p></div>
+      <div class="case"><b>N11. Sinh hoạt lớp cuối tuần</b><p>Ghim tiết cuối thứ Sáu do GVCN đảm nhiệm.</p></div>
+      <div class="case"><b>N12. Họp tổ chuyên môn</b><p>Khoá cùng một khung tiết cho toàn bộ GV trong tổ.</p></div>
+      <div class="case"><b>N13. Hội đồng sư phạm</b><p>Khoá một buổi chiều/tháng cho toàn trường (khai báo dạng ô cấm).</p></div>
+      <div class="case"><b>N14. Tuần kiểm tra định kỳ</b><p>Tạo bản TKB riêng cho tuần thi, giữ bản gốc để quay lại sau.</p></div>
+      <div class="case"><b>N15. Ngày lễ, nghỉ bù</b><p>Bỏ ngày khỏi cấu hình tuần; hệ thống nén chương trình vào các ngày còn lại và cảnh báo nếu không đủ chỗ.</p></div>
+      <div class="case"><b>N16. GV kiêm nhiệm (Tổng phụ trách, Tổ trưởng)</b><p>Hạ định mức tiết/tuần tương ứng số tiết được trừ.</p></div>
+      <div class="case"><b>N17. Môn tự chọn (Tiếng Anh lớp 1–2, Tiếng dân tộc)</b><p>Khai báo số tiết theo khối, để 0 nếu không tổ chức.</p></div>
+      <div class="case"><b>N18. Câu lạc bộ / tăng cường buổi chiều</b><p>Tạo môn dạng "phụ đạo" ưu tiên buổi chiều.</p></div>
+      <div class="case"><b>N19. Học sinh khuyết tật học hoà nhập</b><p>Ghi chú ở lớp; ưu tiên xếp môn cần hỗ trợ vào buổi sáng.</p></div>
+      <div class="case"><b>N20. GV lớn tuổi, sức khoẻ hạn chế</b><p>Giảm số tiết liên tục tối đa xuống 3 cho riêng GV đó.</p></div>
+      <div class="case"><b>N21. Giáo viên đề nghị nghỉ một buổi cố định</b><p>Đáp ứng nếu tổng cầu còn khả thi; hệ thống báo ngay nếu không xếp nổi.</p></div>
+      <div class="case"><b>N22. Hai GV bộ môn cùng môn</b><p>Tự động chia lớp theo tải để cân bằng số tiết.</p></div>
+      <div class="case"><b>N23. Phát sinh giữa kỳ (thêm lớp, tách lớp)</b><p>Thêm lớp và chạy lại; dữ liệu cũ được giữ trong bản xuất JSON.</p></div>
+      <div class="case"><b>N24. Không tìm được lời giải</b><p>Hệ thống liệt kê chính xác tiết nào chưa xếp được và nguyên nhân, kèm gợi ý nới ràng buộc.</p></div>
+      <div class="case" style="border-color:#1e5eff"><b>N25. Toàn trường nghỉ một buổi cố định</b><p>Khai báo ở tab Cấu hình → «Buổi nghỉ của toàn trường». Mặc định <b>nghỉ chiều thứ Sáu</b>. Khung tuần tự co lại và tiết Sinh hoạt lớp tự dời về tiết cuối buổi còn học của ngày cuối tuần.</p></div>
+      <div class="case" style="border-color:#1e5eff"><b>N26. Mọi giáo viên đều có buổi/ngày nghỉ</b><p>GVCN nghỉ 1 buổi; GV bộ môn và GV buổi 2 nghỉ trọn 1 ngày. Hệ thống <b>tự chọn và rải đều</b> để không dồn quá nhiều GV nghỉ cùng lúc, hoặc Phó Hiệu trưởng chỉ định cứng («cô A nghỉ thứ Năm»). Kết quả in ở bảng «Lịch nghỉ của giáo viên».</p></div>
+      <div class="case" style="border-color:#1e5eff"><b>N27. Giới hạn buổi chiều của GVCN</b><p>GVCN chỉ đứng lớp <b>1–2 buổi chiều/tuần</b>; các buổi chiều còn lại do GV bộ môn và GV buổi 2 đảm nhiệm. Đặt ở cột «Tối đa buổi chiều» trong tab Giáo viên (0 = không giới hạn).</p></div>
+      <div class="case" style="border-color:#1e5eff"><b>N28. Dồn lớp trong một tiết</b><p>Khi thiếu giáo viên, GV Tiếng Anh có thể dạy <b>ghép 2 lớp cùng khối, cùng môn</b> trong một tiết. Bật ở cột «Dồn lớp» của môn học. Đây là <b>van xả cuối cùng</b> — thuật toán chỉ dùng khi không còn cách xếp nào khác, và các tiết ghép được đánh dấu rõ trên thời khoá biểu. Chọn <b>«Luôn dồn»</b> nếu trường chủ động ghép lớp cả năm — khi đó thuật toán ưu tiên ghép thay vì né tránh.</p></div>
+      <div class="case" style="border-color:#0f9d58"><b>N30. Không đến trường chỉ dạy 1 tiết rồi về</b><p>Giáo viên đã lên lớp buổi nào thì buổi đó phải đủ số tiết tối thiểu (mặc định <b>2 tiết buổi sáng, 2 tiết buổi chiều</b>, chỉnh ở tab Cấu hình). Mức này <b>tự co lại</b> nếu buổi đó không còn đủ tiết trống — ví dụ sáng thứ Sáu chỉ còn tiết 2 và 3 vì tiết 1 là đón lớp và tiết 4 là Sinh hoạt lớp.</p></div>
+      <div class="case" style="border-color:#0f9d58"><b>N31. GVCN không nghỉ buổi sáng, đón lớp tiết đầu</b><p>Buổi nghỉ của GVCN luôn rơi vào buổi chiều; tiết 1 mỗi buổi sáng của lớp được giữ riêng cho GVCN để ổn định tổ chức lớp.</p></div>
+      <div class="case" style="border-color:#0f9d58"><b>N32. GVCN dạy 2 tiết sáng thì phải liền kề</b><p>Không để GVCN dạy tiết 1 rồi chờ đến tiết 4 mới dạy tiếp. Ở tab Cấu hình, mục <b>«Số tiết đầu buổi sáng dành riêng cho GVCN»</b>: chọn <b>2 tiết</b> thì điều kiện liền kề được bảo đảm tuyệt đối (GVCN luôn dạy tiết 1+2), nhưng lớp sẽ chật hơn; chọn <b>1 tiết</b> thì xếp đủ 100% số tiết nhưng đôi khi còn vài buổi chưa liền kề.</p></div>
+      <div class="case" style="border-color:#1e5eff"><b>N29. Giáo viên chỉ dạy một số khối</b><p>Rất phổ biến trong phân công thực tế: <i>«cô A dạy Mĩ thuật toàn trường nhưng Công nghệ chỉ khối 3»</i>, <i>«thầy B dạy buổi 2 chỉ khối 1 + 2»</i>. Khai báo ở cột <b>Giới hạn khối</b> trong tab Giáo viên theo cú pháp <code>CN:3</code> (chỉ môn đó) hoặc <code>*:1,2</code> (mọi môn). Để trống = dạy mọi khối. Khối nào không có GV bộ môn phù hợp sẽ <b>tự động trả về GVCN</b> nếu GVCN có môn đó.</p></div>
+    </div>
+
+    <h3>V. Thuật toán được cài đặt</h3>
+    <ol>
+      <li><b>Phân công giáo viên cân tải:</b> mỗi cặp (lớp, môn) được gán GV có tải thấp nhất trong đúng nhóm phụ trách (GVCN / bộ môn / buổi 2).</li>
+      <li><b>Bố trí buổi &amp; ngày nghỉ</b> cho từng giáo viên, rải đều trong tuần, có kiểm tra còn đủ chỗ dạy trước khi chốt.</li>
+      <li><b>Xếp tiết ghim</b> (Chào cờ, Sinh hoạt lớp, tiết ghim thủ công).</li>
+      <li><b>Sắp xếp tham lam theo độ khó giảm dần</b> — độ khó = áp lực tài nguyên (tiết cần / chỗ trống khả dụng của GV và phòng).</li>
+      <li><b>Cơ chế "đẩy chỗ" 1 tầng:</b> khi bí, thử dời tiết đang chiếm chỗ sang ô khác thay vì bỏ cuộc.</li>
+      <li><b>Khởi động lại ngẫu nhiên</b> nhiều lần, giữ lời giải tốt nhất (ít tiết chưa xếp nhất, điểm phạt mềm thấp nhất).</li>
+      <li><b>Tinh chỉnh bằng leo đồi:</b> hoán đổi ngẫu nhiên hai ô trong cùng lớp, chỉ chấp nhận khi tổng điểm phạt giảm.</li>
+      <li><b>Thử lại với phương án nghỉ khác:</b> nếu vẫn còn tiết chưa xếp, hệ thống bố trí lại buổi/ngày nghỉ của giáo viên rồi chạy lại — vì một phương án nghỉ sai có thể khoá chết toàn bộ lời giải.</li>
+    </ol>
+
+    <h3>VI. Sản phẩm bàn giao</h3>
+    <ul>
+      <li>TKB theo lớp (10 lớp) — dán bảng lớp, gửi phụ huynh.</li>
+      <li>TKB theo giáo viên — dán phòng hội đồng.</li>
+      <li>TKB sử dụng phòng chức năng — dán tại từng phòng.</li>
+      <li>Bảng thống kê định mức tiết/tuần từng GV — phục vụ chấm công, thanh toán thừa giờ.</li>
+      <li>Biên bản kiểm tra xung đột — lưu hồ sơ chuyên môn.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ TAB: CẤU HÌNH ============ -->
+<section class="panel" id="tab-config">
+  <div class="page-head">
+    <h2>Cấu hình chung</h2>
+    <p>Khai báo thông tin trường, khung giờ học và các tham số điều khiển thuật toán.
+       Mọi thay đổi ở đây ảnh hưởng tới toàn bộ thời khoá biểu, nhớ bấm <b>Lưu cấu hình</b> ở cuối trang.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Thông tin trường <span class="sub">In trên đầu mỗi bản thời khoá biểu</span></h3>
+      <div class="field"><label>Tên trường</label><input id="cfgSchool">
+        <span class="fhint">Viết hoa toàn bộ, ví dụ: TRƯỜNG TIỂU HỌC HOA SEN.</span></div>
+      <div class="field"><label>Năm học</label><input id="cfgYear">
+        <span class="fhint">Ví dụ: 2026 - 2027.</span></div>
+      <div class="field"><label>Đợt áp dụng</label>
+        <select id="cfgSemester">
+          <option value="Học kỳ I">Học kỳ I</option>
+          <option value="Học kỳ II">Học kỳ II</option>
+          <option value="Cả năm học">Cả năm học</option>
+        </select>
+        <span class="fhint">Chọn <b>Cả năm học</b> nếu dùng chung một thời khoá biểu cho cả hai học kỳ.</span></div>
+      <div class="field"><label>Áp dụng từ ngày</label><input id="cfgFrom" placeholder="VD: 08/09/2026">
+        <span class="fhint">Ngày bắt đầu thực hiện, in ở dòng dưới tiêu đề.</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Khung giờ học <span class="sub">Bộ khung mà mọi tiết sẽ được xếp vào</span></h3>
+      <div class="field"><label>Các ngày học trong tuần</label>
+        <div class="chips" id="cfgDays"></div>
+        <span class="fhint">Bấm để bật/tắt từng ngày. Bỏ thứ Bảy nếu trường chỉ học 5 ngày.</span></div>
+      <div class="field"><label>Buổi nghỉ của toàn trường</label>
+        <div class="chips" id="cfgOffSessions"></div>
+        <span class="fhint">Buổi được bật là buổi <b>cả trường nghỉ</b>, không lớp nào có tiết.
+          Ví dụ bật «Chiều T6» nếu trường nghỉ chiều thứ Sáu.</span></div>
+      <div class="row">
+        <div class="field"><label>Số tiết buổi sáng</label><input type="number" id="cfgMorning" min="0" max="6"></div>
+        <div class="field"><label>Số tiết buổi chiều</label><input type="number" id="cfgAfternoon" min="0" max="5"></div>
+      </div>
+      <span class="fhint">Tổng hai buổi <b>không nên quá 7 tiết/ngày</b> theo Điều lệ trường tiểu học.
+        Nếu trường có tiết chào cờ sớm riêng thì tính nó là tiết 1 của buổi sáng.</span>
+      <div class="row" style="margin-top:14px">
+        <div class="field"><label>Giờ vào buổi sáng</label><input id="cfgMStart" placeholder="06:50"></div>
+        <div class="field"><label>Giờ vào buổi chiều</label><input id="cfgAStart" placeholder="14:00"></div>
+      </div>
+      <span class="fhint">Giờ bắt đầu tiết đầu tiên của mỗi buổi, dạng 24 giờ.</span>
+      <div class="row" style="margin-top:14px">
+        <div class="field"><label>Thời lượng một tiết (phút)</label><input type="number" id="cfgLen"></div>
+        <div class="field"><label>Nghỉ chuyển tiết (phút)</label><input type="number" id="cfgBreak"></div>
+      </div>
+      <span class="fhint">Tiểu học thường 35 phút/tiết, nghỉ 5 phút giữa hai tiết liền nhau.</span>
+      <div class="row" style="margin-top:14px">
+        <div class="field"><label>Ra chơi dài sau tiết thứ</label><input type="number" id="cfgLBAfter"></div>
+        <div class="field"><label>Ra chơi dài (phút)</label><input type="number" id="cfgLBMin"></div>
+      </div>
+      <span class="fhint">Giờ ra chơi giữa buổi sáng. Ví dụ đặt 4 và 30 nghĩa là sau tiết thứ 4 nghỉ 30 phút.</span>
+    </div>
+
+    <div class="card">
+      <h3>Quy định về giáo viên <span class="sub">Bảo vệ quyền lợi và sức khoẻ giáo viên</span></h3>
+      <div class="row">
+        <div class="field"><label>Tối thiểu tiết mỗi buổi SÁNG</label><input type="number" id="cfgMinM" min="0" max="6"></div>
+        <div class="field"><label>Tối thiểu tiết mỗi buổi CHIỀU</label><input type="number" id="cfgMinC" min="0" max="5"></div>
+      </div>
+      <span class="fhint">Giáo viên đã đến trường buổi nào thì buổi đó phải dạy đủ ngần này tiết —
+        tránh cảnh nhà xa mà vào dạy 1 tiết rồi về. Mức này <b>tự co lại</b> nếu buổi đó không đủ tiết trống.</span>
+      <div class="field" style="margin-top:14px"><label>Số tiết đầu buổi sáng dành riêng cho GVCN</label>
+        <select id="cfgGvcnFirst">
+          <option value="1">1 tiết — GVCN đón lớp tiết đầu (dễ xếp hơn)</option>
+          <option value="2">2 tiết — GVCN dạy liền tiết 1 và 2 (chắc chắn liền kề)</option>
+        </select>
+        <span class="fhint">Các tiết đầu buổi sáng được giữ riêng cho giáo viên chủ nhiệm để ổn định tổ chức lớp.
+          Chọn 2 tiết thì lớp chật hơn nhưng bảo đảm GVCN dạy liền mạch.</span></div>
+      <div class="field"><label>Số tiết liên tục tối đa của một giáo viên</label><input type="number" id="cfgConsec">
+        <span class="fhint">Không để giáo viên dạy quá nhiều tiết dính nhau trong một buổi. Khuyến nghị 4.</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Sức mạnh thuật toán <span class="sub">Chạy lâu hơn thì kết quả đẹp hơn</span></h3>
+      <div class="field"><label>Số phương án bố trí ngày nghỉ</label><input type="number" id="cfgOuter">
+        <span class="fhint">Mỗi phương án là một cách phân ngày/buổi nghỉ cho giáo viên.
+          Phương án nghỉ chọn sai có thể khoá chết cả lời giải, nên thử nhiều phương án rất đáng.
+          Khuyến nghị 8–12.</span></div>
+      <div class="row">
+        <div class="field"><label>Số lần khởi động lại</label><input type="number" id="cfgRestarts"></div>
+        <div class="field"><label>Số vòng tinh chỉnh</label><input type="number" id="cfgPolish"></div>
+      </div>
+      <span class="fhint"><b>Khởi động lại</b>: số lần xếp lại từ đầu với thứ tự ngẫu nhiên khác, giữ kết quả tốt nhất (30–60).
+        <b>Tinh chỉnh</b>: số lần thử hoán đổi hai tiết để làm đẹp thêm (20.000–60.000).
+        Tăng cả hai nếu còn tiết chưa xếp được; đổi lại thời gian chạy lâu hơn.</span>
+    </div>
+
+    <div class="card" style="grid-column:1/-1">
+      <h3>Mức ưu tiên các tiêu chí <span class="sub">Số càng lớn thì thuật toán càng cố gắng đạt tiêu chí đó</span></h3>
+      <p class="fhint" style="margin:-6px 0 16px">Đây là các mong muốn «nên có», khác với ràng buộc bắt buộc.
+        Khi không thể chiều lòng tất cả, thuật toán sẽ hy sinh tiêu chí có số nhỏ hơn.
+        Đặt về 0 nghĩa là bỏ qua tiêu chí đó. Nếu không rõ, cứ để nguyên mặc định.</p>
+      <div id="cfgWeights" class="weights"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px" id="clockPreview"></div>
+  <div class="stickybar"><button class="btn btn-primary btn-lg" id="btnSaveConfig">Lưu cấu hình</button>
+    <span class="fhint">Thay đổi chỉ có hiệu lực sau khi bấm nút này.</span></div>
+</section>
+
+<!-- ============ TAB: MÔN HỌC ============ -->
+<section class="panel" id="tab-subjects">
+  <div class="page-head">
+    <h2>Môn học &amp; Phân phối chương trình</h2>
+    <p>Mỗi dòng là một môn. Năm cột cuối là <b>số tiết mỗi tuần</b> của môn đó cho từng khối lớp — đây chính là kế hoạch giáo dục nhà trường. Cột <b>Người dạy</b> quyết định môn thuộc về giáo viên chủ nhiệm, giáo viên bộ môn hay giáo viên dạy buổi 2. Tổng số tiết mỗi khối không được vượt số ô của khung tuần.</p>
+  </div>
+  <div class="toolbar">
+    <div class="searchbox"><span>🔍</span><input class="tsearch" data-table="tblSubjects" placeholder="Tìm theo tên môn hoặc mã môn…"></div>
+    <span class="spacer"></span>
+    <span class="tcount" data-count="tblSubjects"></span>
+  </div>
+  <div class="table-wrap"><table class="data" id="tblSubjects"></table></div>
+  <p class="scrollhint">Bảng có 17 cột — cuộn ngang để xem hết. Hai cột <b>Mã</b> và <b>Tên</b> luôn dính bên trái. Giữ <kbd>Shift</kbd> + lăn chuột để cuộn ngang nhanh.</p>
+  <div class="bar">
+    <button class="btn btn-primary" id="btnAddSubject">+ Thêm môn học</button>
+    <button class="btn" id="btnPalette" title="Gán lại màu hài hoà cho toàn bộ môn học">🎨 Chuẩn hoá bảng màu</button>
+    <span class="spacer"></span>
+    <span class="tot" id="subjTotals"></span>
+  </div>
+</section>
+
+<!-- ============ TAB: LỚP ============ -->
+<section class="panel" id="tab-classes">
+  <div class="page-head">
+    <h2>Danh sách lớp học</h2>
+    <p>Khai báo các lớp trong trường và giáo viên chủ nhiệm từng lớp. Cột <b>Tiết/tuần</b> tự tính từ phân phối chương trình của khối; cột <b>Ô trống</b> cho biết lớp còn dư bao nhiêu ô — số này bằng 0 nghĩa là lớp kín, rất khó xếp và mọi thay đổi nhỏ đều có thể làm vỡ lịch.</p>
+  </div>
+  <div class="toolbar">
+    <div class="searchbox"><span>🔍</span><input class="tsearch" data-table="tblClasses" placeholder="Tìm theo tên lớp, GVCN, ghi chú…"></div>
+    <span class="spacer"></span>
+    <span class="tcount" data-count="tblClasses"></span>
+  </div>
+  <div class="table-wrap"><table class="data" id="tblClasses"></table></div>
+  <div class="bar"><button class="btn" id="btnAddClass">+ Thêm lớp</button></div>
+</section>
+
+<!-- ============ TAB: GIÁO VIÊN ============ -->
+<section class="panel" id="tab-teachers">
+  <div class="page-head">
+    <h2>Đội ngũ giáo viên</h2>
+    <p>Ba nhóm giáo viên: <b>GVCN</b> phụ trách lớp mình, <b>GV bộ môn</b> dạy môn chuyên toàn trường, <b>GV buổi 2</b> chỉ dạy buổi chiều. Cột <b>Giới hạn khối</b> dùng khi một giáo viên chỉ dạy môn nào đó ở vài khối — ví dụ <code>CN:3</code> là chỉ dạy Công nghệ khối 3, <code>*:1,2</code> là mọi môn nhưng chỉ khối 1 và 2.</p>
+  </div>
+  <div class="toolbar">
+    <div class="searchbox"><span>🔍</span><input class="tsearch" data-table="tblTeachers" placeholder="Tìm theo tên, mã, môn phụ trách, ghi chú…"></div>
+    <span class="spacer"></span>
+    <span class="tcount" data-count="tblTeachers"></span>
+  </div>
+  <div class="table-wrap"><table class="data" id="tblTeachers"></table></div>
+  <p class="scrollhint">Bảng có 16 cột — cuộn ngang để xem hết. Hai cột <b>Mã</b> và <b>Tên</b> luôn dính bên trái. Giữ <kbd>Shift</kbd> + lăn chuột để cuộn ngang nhanh.</p>
+  <div class="bar"><button class="btn" id="btnAddTeacher">+ Thêm giáo viên</button></div>
+</section>
+
+<!-- ============ TAB: PHÒNG ============ -->
+<section class="panel" id="tab-rooms">
+  <div class="page-head">
+    <h2>Phòng học chức năng</h2>
+    <p>Chỉ khai báo phòng <b>dùng chung toàn trường</b> như phòng Tin học, phòng Âm nhạc, sân trường — không cần khai phòng học riêng của mỗi lớp. <b>Sức chứa đồng thời</b> là số lớp có thể học cùng lúc: trường có 2 sân thể dục thì đặt 2, chỉ 1 phòng máy thì đặt 1.</p>
+  </div>
+  <div class="toolbar">
+    <div class="searchbox"><span>🔍</span><input class="tsearch" data-table="tblRooms" placeholder="Tìm theo tên phòng…"></div>
+    <span class="spacer"></span>
+    <span class="tcount" data-count="tblRooms"></span>
+  </div>
+  <div class="table-wrap"><table class="data" id="tblRooms"></table></div>
+  <div class="bar"><button class="btn" id="btnAddRoom">+ Thêm phòng</button></div>
+</section>
+
+<!-- ============ TAB: RÀNG BUỘC ============ -->
+<section class="panel" id="tab-rules">
+  <div class="page-head">
+    <h2>Ràng buộc &amp; Xử lý ngoại lệ</h2>
+    <p>Nơi khai báo các trường hợp đặc biệt: giáo viên bận cố định, tiết phải đứng đúng chỗ, lớp nghỉ một buổi. Các công tắc phía dưới bật/tắt từng tiêu chí xếp lịch — tắt một tiêu chí sẽ giúp dễ xếp hơn nhưng chất lượng thời khoá biểu giảm đi.</p>
+  </div>
+  <div class="card">
+    <h3>Bật/tắt tiêu chí xếp lịch</h3>
+    <p class="fhint" style="margin:-8px 0 16px">Mỗi ô là một quy định. Bỏ tick nghĩa là thuật toán được phép phá quy định đó — lịch dễ xếp hơn nhưng chất lượng giảm. Chỉ nên tắt khi đang bí.</p>
+    <div id="ruleToggles" class="toggles"></div>
+  </div>
+
+  <div class="grid-2" style="margin-top:16px">
+    <div class="card">
+      <h3>Tiết ghim cố định <span class="sub">(N9, N10, N11)</span></h3>
+      <p class="fhint" style="margin:-8px 0 14px">Buộc một môn của một lớp phải nằm <b>đúng ô này</b>, thuật toán không được dời đi. Dùng cho tiết chuyên đề, thao giảng, hoặc khi bạn muốn tự tay định vị vài tiết. Chào cờ và Sinh hoạt lớp đã tự ghim sẵn nên không cần khai ở đây.</p>
+      <div class="row">
+        <select id="pinClass"></select>
+        <select id="pinSubject"></select>
+        <select id="pinSlot"></select>
+        <button class="btn btn-sm" id="btnAddPin">Ghim</button>
+      </div>
+      <div class="table-wrap"><table class="data mini" id="tblPins"></table></div>
+    </div>
+
+    <div class="card">
+      <h3>Ô cấm của lớp <span class="sub">(N7, N13, N15)</span></h3>
+      <p class="fhint" style="margin:-8px 0 14px">Đánh dấu ô mà lớp <b>không được xếp tiết nào</b>. Dùng khi một lớp nghỉ riêng một buổi, hoặc cả trường họp hội đồng. Khác với «Buổi nghỉ toàn trường» ở tab Cấu hình vì chỗ này chỉ áp cho một lớp.</p>
+      <div class="row">
+        <select id="blkClass"></select>
+        <select id="blkSlot"></select>
+        <input id="blkNote" placeholder="Lý do (VD: lớp 1 nghỉ chiều thứ 6)">
+        <button class="btn btn-sm" id="btnAddBlock">Cấm</button>
+      </div>
+      <div class="table-wrap"><table class="data mini" id="tblBlocks"></table></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Lịch bận của giáo viên <span class="sub">(N1–N4, N12, N21)</span></h3>
+    <p class="fhint" style="margin:-8px 0 14px">Chọn giáo viên rồi <b>bấm vào ô</b> để đánh dấu những lúc thầy cô không thể đứng lớp: đi học nâng chuẩn, dạy liên trường, họp tổ, nuôi con nhỏ dưới 12 tháng. Thuật toán tuyệt đối không xếp tiết vào ô đã đánh dấu.</p>
+    <div class="row"><select id="busyTeacher"></select>
+      <button class="btn btn-sm" id="btnBusyClear">Xoá hết ô bận</button>
+      <button class="btn btn-sm" id="btnBusyMorning">Cấm tiết 1 mỗi sáng (N1)</button>
+      <button class="btn btn-sm" id="btnBusyLast">Cấm tiết cuối mỗi chiều (N1)</button>
+    </div>
+    <div id="busyGrid" class="busy-grid"></div>
+  </div>
+</section>
+
+<!-- ============ TAB: CHẠY ============ -->
+<section class="panel" id="tab-run">
+  <div class="page-head">
+    <h2>Chạy thuật toán xếp lịch</h2>
+    <p>Trước khi chạy, phần <b>tiền kiểm</b> sẽ soát xem dữ liệu có khả thi không: lớp đủ ô chưa, giáo viên có quá tải không, phòng chức năng có đủ không. Dòng đỏ là lỗi phải sửa, dòng vàng là cảnh báo nên xem, dòng xanh là ổn.</p>
+  </div>
+  <div class="card">
+    <div class="run-head">
+      <button class="btn btn-primary btn-lg" id="btnRun">▶ Bắt đầu xếp thời khoá biểu</button>
+      <div id="runStatus" class="run-status">Chưa chạy.</div>
+    </div>
+    <div id="preflight"></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Nhật ký &amp; kết quả</h3>
+    <pre id="runLog" class="log">—</pre>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Lịch nghỉ của giáo viên <span class="sub">(N26 — GVCN nghỉ 1 buổi, GV bộ môn / GV buổi 2 nghỉ 1 ngày)</span></h3>
+    <div class="table-wrap"><table class="data" id="tblOff"></table></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>Thống kê định mức giáo viên</h3>
+    <div class="table-wrap"><table class="data" id="tblLoad"></table></div>
+  </div>
+</section>
+
+<!-- ============ TAB: XEM ============ -->
+<section class="panel" id="tab-view">
+  <div class="no-print">
+    <div class="page-head"><h2>Xem &amp; In thời khoá biểu</h2><p>Xem theo lớp, theo giáo viên, theo phòng hoặc bảng tổng hợp toàn trường. Có thể xuất ra Word để chỉnh sửa, xuất PDF để gửi, hoặc bật chế độ kéo thả để tự tay dời tiết.</p></div>
+    <div class="viewbar">
+      <div class="segmented" id="viewMode">
+        <button class="active" data-mode="class">Theo lớp</button>
+        <button data-mode="teacher">Theo giáo viên</button>
+        <button data-mode="room">Theo phòng</button>
+        <button data-mode="master">Bảng tổng hợp</button>
+      </div>
+      <select id="viewTarget"></select>
+      <label class="chk" title="Hiện toàn bộ lớp / giáo viên / phòng để in một lượt"><input type="checkbox" id="viewAll"> In tất cả</label>
+      <span class="spacer"></span>
+      <label class="chk" title="In trắng đen, tiết kiệm mực"><input type="checkbox" id="viewMono"> Bản không màu</label>
+      <button class="btn" id="btnWord">Xuất Word (.docx)</button>
+      <button class="btn" id="btnPdf">Xuất PDF</button>
+      <button class="btn" id="btnCsv">Xuất CSV</button>
+      <button class="btn btn-primary" id="btnPrint">In</button>
+    </div>
+    <div class="viewbar dragbar">
+      <label class="chk"><input type="checkbox" id="dragMode"> ✋ Bật kéo thả &amp; khoá tiết</label>
+      <span id="lockInfo" class="lockinfo">Chưa khoá tiết nào</span>
+      <span class="spacer"></span>
+      <button class="btn" id="btnClearLocks">Bỏ mọi khoá</button>
+      <button class="btn btn-primary" id="btnRerun">▶ Xếp lại theo phần đã kéo</button>
+    </div>
+    <p class="hint" id="dragHint" style="display:none">
+      Kéo một ô thả sang ô khác <b>trong cùng lớp</b> để hoán đổi hai tiết. Bấm vào ô để khoá / mở khoá.
+      Ô đã khoá sẽ được giữ nguyên vị trí, phần mềm chỉ xếp lại các lớp còn lại cho khớp.
+      Xong thì bấm «Xếp lại theo phần đã kéo», rồi sang tab «Kiểm tra xung đột» để soát.</p>
+  </div>
+  <div id="filterBar" class="filterbar no-print" style="display:none"></div>
+  <div id="viewArea" class="view-area"><p class="empty">Chưa có thời khoá biểu. Hãy sang tab «Chạy xếp lịch».</p></div>
+</section>
+
+<!-- ============ TAB: KIỂM TRA ============ -->
+<section class="panel" id="tab-check">
+  <div class="page-head">
+    <h2>Kiểm tra xung đột &amp; nghiệm thu</h2>
+    <p>Soát toàn bộ thời khoá biểu trước khi trình ký. <b>Lỗi ràng buộc cứng</b> là vi phạm bắt buộc phải sửa (trùng giáo viên, quá tải phòng, thiếu tiết). <b>Cảnh báo mềm</b> là điểm chưa đẹp, có thể chấp nhận.</p>
+  </div>
+  <div class="bar"><button class="btn btn-primary" id="btnCheck">Chạy kiểm tra toàn diện</button></div>
+  <div id="checkResult"></div>
+</section>
+
+</main>
+
+<!-- ============ TAB: SAO LƯU ============ -->
+<section class="panel" id="tab-backup">
+  <div class="page-head">
+    <h2>Sao lưu &amp; Lịch sử</h2>
+    <p>Mỗi bản sao lưu là ảnh chụp <b>toàn bộ dữ liệu</b> tại một thời điểm — cấu hình, môn học, lớp, giáo viên,
+       ràng buộc và cả thời khoá biểu đã xếp. Lỡ sửa hỏng thì vào đây khôi phục lại bản cũ, hoặc tải về máy để cất giữ.</p>
+  </div>
+
+  <div class="bk-hero">
+    <div class="field">
+      <label>Tên bản sao lưu</label>
+      <input id="bkLabel" placeholder="VD: Bản duyệt của Hiệu trưởng">
+    </div>
+    <button class="btn btn-primary btn-lg" id="btnBkSave">Lưu bản sao lưu</button>
+    <button class="btn btn-lg" id="btnBkFile">Tải về máy</button>
+    <button class="btn btn-lg" id="btnBkImport">Nhập tệp .json</button>
+  </div>
+  <div class="bk-switch">
+    <input type="checkbox" id="bkAuto">
+    <label for="bkAuto"><b>Tự động sao lưu</b> — tự chụp lại trước khi nhập tệp, khôi phục mẫu,
+      khôi phục bản cũ và sau mỗi lần xếp lịch thành công.</label>
+    <span class="spacer"></span>
+    <span class="tcount" id="bkUsage"></span>
+    <button class="btn btn-sm btn-danger" id="btnBkClear">Xoá toàn bộ lịch sử</button>
+  </div>
+
+  <div id="bkList" class="bklist"></div>
+</section>
+
+<!-- ============ HỘP THOẠI CHỌN MÔN PHỤ TRÁCH ============ -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3 id="mdTitle">Chọn môn phụ trách</h3>
+        <p id="mdSub"></p>
+      </div>
+      <button class="modal-x" id="mdClose" title="Đóng">×</button>
+    </div>
+    <div class="modal-tools">
+      <div class="searchbox"><span>🔍</span><input id="mdSearch" placeholder="Tìm theo tên môn hoặc mã môn…"></div>
+      <span class="spacer"></span>
+      <span class="tcount" id="mdCount"></span>
+    </div>
+    <div class="modal-body" id="mdBody"></div>
+    <div class="modal-foot">
+      <span class="fhint" id="mdHint"></span>
+      <span class="spacer"></span>
+      <button class="btn" id="mdCancel">Huỷ</button>
+      <button class="btn btn-primary" id="mdSave">Lưu phân công</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/scheduler.js"></script>
+<script src="js/docx.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

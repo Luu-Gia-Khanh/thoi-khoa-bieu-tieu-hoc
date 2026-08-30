@@ -1,0 +1,18 @@
+# Hệ điều hành
+.DS_Store
+Thumbs.db
+
+# Trình soạn thảo
+.vscode/
+.idea/
+*.swp
+
+# Tệp tạm
+*.log
+*.tmp
+node_modules/
+
+# Dữ liệu thời khoá biểu xuất ra (chứa thông tin giáo viên thật)
+*.docx
+*.csv
+TKB-*.json
